@@ -2,8 +2,8 @@
 MR. ANGRY 2026 - PROJECT STATUS
 ================================================================================
 Last Updated: 2026-02-01
-Current Phase: Phase 3 COMPLETE
-Next Phase: Phase 4 - Player Movement & Controls
+Current Phase: Phase 4 COMPLETE
+Next Phase: Phase 5 - Elevators & Stairs Navigation
 ================================================================================
 
 COMPLETED PHASES
@@ -48,9 +48,29 @@ COMPLETED PHASES
     - BootScene loads tilemap JSON
     - GameScene renders tilemap with collision layer
     - Object layer parsing extracts all spawn points
-    - Debug visualization shows all spawn points
-    - Test player with physics and tilemap collision
     - Floor Y-positions added to game constants
+
+[✓] PHASE 4: Player Movement & Controls (Commit: 3a280a0)
+    - Created src/entities/Player.js class:
+      * Extends Phaser.Physics.Arcade.Sprite
+      * Full state management (lives, inventory, position states)
+      * Tighter hitbox (16x18) for fair gameplay
+      * Movement handling for normal, stairs, and elevator modes
+      * Conveyor belt detection and push effect
+      * Stair zone detection and entry/exit
+      * Death and respawn system with invulnerability
+      * Visual feedback: dust particles, screen flash, tinting
+    - Updated GameScene with proper Player integration:
+      * Arrow keys + WASD input handling
+      * Conveyor and stair collision checking
+      * Pause system (P key) with overlay
+      * Debug visualization (D key) showing all spawn points
+      * Minimal HUD: lives (hearts), score, floor indicator
+    - Visual polish:
+      * Dust particle system for movement feedback
+      * Screen shake on death
+      * Camera flash effects (yellow for items, red for death)
+      * Invulnerability flicker after respawn
 
 --------------------------------------------------------------------------------
 
@@ -59,19 +79,28 @@ CURRENT STATE
 
 Working Features:
 - Dev server runs on localhost:3000 (npm run dev)
-- Tilemap loads and renders with all 4 floors visible
-- Elevator shafts displayed as vertical channels
-- Stair positions marked with debug lines
-- All 10 door positions, 2 elevators, 3 stairs logged to console
-- Test player sprite with physics collision enabled
-- Arrow key input handling (movement ready for Phase 4)
+- Player spawns at correct position with proper physics
+- Smooth horizontal movement with Arrow keys or WASD
+- Player blocked by floor/wall collision tiles
+- Sprite flipping based on movement direction
+- Walk/idle animation switching
+- Conveyor belt detection (pushes player when on it)
+- Stair proximity detection (entry with up/down)
+- Pause toggle with semi-transparent overlay
+- Debug visualization toggle showing all level objects
+- HUD displaying lives (hearts), score, floor number
 - Production build succeeds (npm run build)
 
 Key Files Modified This Phase:
-- assets/tilemaps/level1.json (NEW - complete level tilemap)
-- src/scenes/BootScene.js (added tilemap loading)
-- src/scenes/GameScene.js (tilemap rendering, object parsing, test player)
-- src/constants/game.js (added FLOORS, FLOOR_HEIGHT, NUM_FLOORS)
+- src/entities/Player.js (NEW - complete Player class)
+- src/scenes/GameScene.js (rewritten - full game integration)
+
+Controls:
+- Arrow Keys / WASD: Move player
+- P: Toggle pause
+- D: Toggle debug visualization
+- G: Go to Game Over (dev)
+- M: Return to Menu (dev)
 
 Test Commands:
 - npm install    (install dependencies)
@@ -80,33 +109,32 @@ Test Commands:
 
 --------------------------------------------------------------------------------
 
-NEXT PHASE: Phase 4 - Player Movement & Controls
-------------------------------------------------
+NEXT PHASE: Phase 5 - Elevators & Stairs Navigation
+----------------------------------------------------
 
-Objective: Implement fully controllable player character.
+Objective: Implement vertical traversal systems.
 
 Tasks:
-[ ] 4.1 Create src/entities/Player.js class (extends Phaser.Physics.Arcade.Sprite)
-[ ] 4.2 Instantiate player in GameScene at spawn point
-[ ] 4.3 Add player to physics system with collision against tilemap
-[ ] 4.4 Implement keyboard input handling (Arrow keys + WASD)
-[ ] 4.5 Implement horizontal movement with sprite flipping
-[ ] 4.6 Implement conveyor belt effect (detect + apply push)
-[ ] 4.7 Implement basic stair detection (enter/exit zones)
-[ ] 4.8 Implement death from falling
-[ ] 4.9 Add player idle animation when not moving
+[ ] 5.1 Create src/systems/ElevatorSystem.js
+[ ] 5.2 Implement elevator entry (snap to X, set state)
+[ ] 5.3 Implement elevator movement (up/down input moves platform)
+[ ] 5.4 Implement elevator exit (left/right to exit)
+[ ] 5.5 Implement full stair traversal (diagonal movement)
+[ ] 5.6 Implement stair exit (reaching top/bottom)
+[ ] 5.7 Implement fall death on stairs
 
 Verification Criteria:
-- Player spawns at correct position
-- Player moves smoothly left/right
-- Player cannot pass through walls
-- Conveyor belt pushes player
-- Player sprite faces direction of movement
+- Player can ride elevators between all floors
+- Elevator stops at floor boundaries
+- Player can exit elevator on any floor
+- Player can ascend/descend stairs diagonally
+- Falling from stairs triggers death
+- Player respawns after death
 
 Reference Docs:
 - docs/plan.md (full task breakdown)
-- docs/tdd.md (Player class structure, input handling)
-- docs/prd.md (US-004: Player Movement)
+- docs/tdd.md (ElevatorSystem class structure)
+- docs/prd.md (US-005: Vertical Navigation)
 
 --------------------------------------------------------------------------------
 
@@ -115,7 +143,7 @@ REPOSITORY
 
 Remote: https://github.com/The-Ruffian-Collective/mrangry2026.git
 Branch: main
-Latest Commit: dd3556a (Phase 3)
+Latest Commit: 3a280a0 (Phase 4)
 
 --------------------------------------------------------------------------------
 
@@ -134,11 +162,12 @@ HANDOVER NOTES FOR NEW AGENTS
    - Push to GitHub
    - Include "Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
-Phase 3 Notes:
-- The tilemap uses Tiled JSON format but was created manually
-- Tile indices: 0=empty, 1=floor (collides), 2=wall decoration, 3=elevator shaft, 4=elevator platform
-- Object layer contains point objects with properties for spawn data
-- Debug visualization draws colored markers for all spawn points
-- Test player in GameScene demonstrates physics collision works
+Phase 4 Notes:
+- Player class handles all movement states internally
+- GameScene passes input state to player.update() each frame
+- Conveyor detection uses floor matching + X range checking
+- Stair detection uses proximity (20px threshold)
+- Debug mode (D key) is very useful for visualizing level layout
+- Pause mode freezes physics but keeps rendering
 
 ================================================================================

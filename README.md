@@ -42,6 +42,7 @@ Then open http://localhost:3000 in your browser.
 | Action (Open Door / Photograph) | Space |
 | Pause | P |
 | Mute | M |
+| Debug View | D |
 
 ## Gameplay
 
@@ -96,12 +97,12 @@ mr-angry-2026/
 
 This project is being developed in phases. See `docs/project-status.txt` for current progress.
 
-### Current Status: Phase 3 Complete
+### Current Status: Phase 4 Complete
 
 - [x] Phase 1: Project Foundation & Phaser Setup
 - [x] Phase 2: Placeholder Graphics & Menu Screen
 - [x] Phase 3: Tilemap & Level Structure
-- [ ] Phase 4: Player Movement & Controls
+- [x] Phase 4: Player Movement & Controls
 - [ ] Phase 5: Elevators & Stairs Navigation
 - [ ] Phase 6: Doors, Items & Mr. Angry
 - [ ] Phase 7: Enemy AI & Collisions
