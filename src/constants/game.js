@@ -35,5 +35,20 @@ export const GAME = {
   LAYER_ENEMIES: 3,
   LAYER_PLAYER: 4,
   LAYER_DOORS: 5,
-  LAYER_HUD: 6
+  LAYER_HUD: 6,
+
+  // Floor Y-positions (surface where characters stand)
+  // Used for pathfinding and floor detection
+  FLOORS: {
+    0: 176,  // Bottom floor (ground level)
+    1: 128,  // Floor 1
+    2: 80,   // Floor 2
+    3: 32    // Top floor (floor 3)
+  },
+
+  // Floor height (distance between floors)
+  FLOOR_HEIGHT: 48,
+
+  // Number of floors
+  NUM_FLOORS: 4
 };

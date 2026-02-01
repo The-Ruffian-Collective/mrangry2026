@@ -1,0 +1,427 @@
+{
+  "compressionlevel": -1,
+  "height": 13,
+  "infinite": false,
+  "layers": [
+    {
+      "data": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ],
+      "height": 13,
+      "id": 1,
+      "name": "background",
+      "opacity": 1,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 20,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0,
+        0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0,
+        1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1,
+        0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0,
+        0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0,
+        1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1,
+        0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0,
+        0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0,
+        1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1,
+        0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+      ],
+      "height": 13,
+      "id": 2,
+      "name": "collision",
+      "opacity": 1,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 20,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 3,
+      "name": "objects",
+      "objects": [
+        {
+          "height": 0,
+          "id": 1,
+          "name": "player_spawn",
+          "point": true,
+          "properties": [],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 32,
+          "y": 176
+        },
+        {
+          "height": 0,
+          "id": 2,
+          "name": "elevator",
+          "point": true,
+          "properties": [
+            { "name": "id", "type": "int", "value": 1 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 56,
+          "y": 16
+        },
+        {
+          "height": 0,
+          "id": 3,
+          "name": "elevator",
+          "point": true,
+          "properties": [
+            { "name": "id", "type": "int", "value": 2 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 264,
+          "y": 16
+        },
+        {
+          "height": 0,
+          "id": 4,
+          "name": "door",
+          "point": true,
+          "properties": [
+            { "name": "floor", "type": "int", "value": 3 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 24,
+          "y": 24
+        },
+        {
+          "height": 0,
+          "id": 5,
+          "name": "door",
+          "point": true,
+          "properties": [
+            { "name": "floor", "type": "int", "value": 3 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 136,
+          "y": 24
+        },
+        {
+          "height": 0,
+          "id": 6,
+          "name": "door",
+          "point": true,
+          "properties": [
+            { "name": "floor", "type": "int", "value": 3 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 296,
+          "y": 24
+        },
+        {
+          "height": 0,
+          "id": 7,
+          "name": "door",
+          "point": true,
+          "properties": [
+            { "name": "floor", "type": "int", "value": 2 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 88,
+          "y": 72
+        },
+        {
+          "height": 0,
+          "id": 8,
+          "name": "door",
+          "point": true,
+          "properties": [
+            { "name": "floor", "type": "int", "value": 2 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 200,
+          "y": 72
+        },
+        {
+          "height": 0,
+          "id": 9,
+          "name": "door",
+          "point": true,
+          "properties": [
+            { "name": "floor", "type": "int", "value": 1 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 24,
+          "y": 120
+        },
+        {
+          "height": 0,
+          "id": 10,
+          "name": "door",
+          "point": true,
+          "properties": [
+            { "name": "floor", "type": "int", "value": 1 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 136,
+          "y": 120
+        },
+        {
+          "height": 0,
+          "id": 11,
+          "name": "door",
+          "point": true,
+          "properties": [
+            { "name": "floor", "type": "int", "value": 1 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 232,
+          "y": 120
+        },
+        {
+          "height": 0,
+          "id": 12,
+          "name": "door",
+          "point": true,
+          "properties": [
+            { "name": "floor", "type": "int", "value": 0 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 120,
+          "y": 168
+        },
+        {
+          "height": 0,
+          "id": 13,
+          "name": "door",
+          "point": true,
+          "properties": [
+            { "name": "floor", "type": "int", "value": 0 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 200,
+          "y": 168
+        },
+        {
+          "height": 0,
+          "id": 14,
+          "name": "stairs",
+          "point": true,
+          "properties": [
+            { "name": "connects_floor_above", "type": "int", "value": 3 },
+            { "name": "connects_floor_below", "type": "int", "value": 2 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 176,
+          "y": 40
+        },
+        {
+          "height": 0,
+          "id": 15,
+          "name": "stairs",
+          "point": true,
+          "properties": [
+            { "name": "connects_floor_above", "type": "int", "value": 2 },
+            { "name": "connects_floor_below", "type": "int", "value": 1 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 240,
+          "y": 88
+        },
+        {
+          "height": 0,
+          "id": 16,
+          "name": "stairs",
+          "point": true,
+          "properties": [
+            { "name": "connects_floor_above", "type": "int", "value": 1 },
+            { "name": "connects_floor_below", "type": "int", "value": 0 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 80,
+          "y": 136
+        },
+        {
+          "height": 0,
+          "id": 17,
+          "name": "conveyor",
+          "point": true,
+          "properties": [
+            { "name": "floor", "type": "int", "value": 3 },
+            { "name": "direction", "type": "int", "value": 1 },
+            { "name": "length", "type": "int", "value": 64 }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 192,
+          "y": 16
+        },
+        {
+          "height": 0,
+          "id": 18,
+          "name": "enemy_spawn",
+          "point": true,
+          "properties": [
+            { "name": "type", "type": "string", "value": "inspector" }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 160,
+          "y": 32
+        },
+        {
+          "height": 0,
+          "id": 19,
+          "name": "enemy_spawn",
+          "point": true,
+          "properties": [
+            { "name": "type", "type": "string", "value": "manager" }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 280,
+          "y": 128
+        },
+        {
+          "height": 0,
+          "id": 20,
+          "name": "enemy_spawn",
+          "point": true,
+          "properties": [
+            { "name": "type", "type": "string", "value": "patron" }
+          ],
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "width": 0,
+          "x": 96,
+          "y": 80
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "nextlayerid": 4,
+  "nextobjectid": 21,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tiledversion": "1.10.2",
+  "tileheight": 16,
+  "tilesets": [
+    {
+      "columns": 8,
+      "firstgid": 1,
+      "image": "../sprites/tileset.png",
+      "imageheight": 32,
+      "imagewidth": 128,
+      "margin": 0,
+      "name": "tileset",
+      "spacing": 0,
+      "tilecount": 16,
+      "tileheight": 16,
+      "tilewidth": 16,
+      "tiles": [
+        {
+          "id": 0,
+          "properties": [
+            { "name": "collides", "type": "bool", "value": true }
+          ]
+        },
+        {
+          "id": 1,
+          "properties": [
+            { "name": "collides", "type": "bool", "value": false }
+          ]
+        },
+        {
+          "id": 2,
+          "properties": [
+            { "name": "collides", "type": "bool", "value": false },
+            { "name": "elevator_shaft", "type": "bool", "value": true }
+          ]
+        },
+        {
+          "id": 3,
+          "properties": [
+            { "name": "collides", "type": "bool", "value": false },
+            { "name": "elevator_platform", "type": "bool", "value": true }
+          ]
+        }
+      ]
+    }
+  ],
+  "tilewidth": 16,
+  "type": "map",
+  "version": "1.10",
+  "width": 20
+}

@@ -10,19 +10,24 @@ export class GameScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor(C64_PALETTE.BLUE);
 
-    // Title
-    this.add.text(GAME.WIDTH / 2, 20, 'GAME SCENE', {
-      fontSize: '16px',
-      fontFamily: 'monospace',
-      color: '#FFFFFF'
-    }).setOrigin(0.5);
+    // Create tilemap
+    this.createLevel();
 
-    // Show sprites for testing
-    this.createTestSprites();
+    // Parse object layer for spawn points
+    this.parseObjects();
+
+    // Create test sprite to verify collision
+    this.createTestPlayer();
 
     // Instructions
-    this.add.text(GAME.WIDTH / 2, 180, 'Press G for Game Over', {
-      fontSize: '8px',
+    this.add.text(GAME.WIDTH / 2, 8, 'Phase 3: Tilemap Test - Arrow keys to move', {
+      fontSize: '6px',
+      fontFamily: 'monospace',
+      color: '#B8C76F'
+    }).setOrigin(0.5);
+
+    this.add.text(GAME.WIDTH / 2, 192, 'Press G=GameOver, M=Menu', {
+      fontSize: '6px',
       fontFamily: 'monospace',
       color: '#959595'
     }).setOrigin(0.5);
@@ -35,83 +40,222 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard.once('keydown-M', () => {
       this.scene.start('MenuScene');
     });
+
+    // Setup cursor keys
+    this.cursors = this.input.keyboard.createCursorKeys();
   }
 
-  createTestSprites() {
-    const centerX = GAME.WIDTH / 2;
+  createLevel() {
+    // Create the tilemap
+    this.map = this.make.tilemap({ key: 'level1' });
 
-    // Player with animation
-    const player = this.add.sprite(50, 100, 'player', 0);
-    player.play('player_walk');
-    this.add.text(50, 120, 'Player', {
-      fontSize: '6px',
-      fontFamily: 'monospace',
-      color: '#FFFFFF'
-    }).setOrigin(0.5);
+    // Add tileset to map
+    const tileset = this.map.addTilesetImage('tileset', 'tileset');
 
-    // Enemies
-    const enemyY = 100;
-    const enemies = [
-      { x: 100, name: 'Inspector', anim: 'inspector_walk' },
-      { x: 150, name: 'Manager', anim: 'manager_walk' },
-      { x: 200, name: 'Patron', anim: 'patron_walk' },
-      { x: 250, name: 'Mr Angry', anim: 'mr_angry_walk' }
-    ];
+    // Create background layer (decorative, no collision)
+    this.backgroundLayer = this.map.createLayer('background', tileset, 0, 0);
+    if (this.backgroundLayer) {
+      this.backgroundLayer.setDepth(GAME.LAYER_BACKGROUND);
+    }
 
-    enemies.forEach(e => {
-      const sprite = this.add.sprite(e.x, enemyY, 'enemies');
-      sprite.play(e.anim);
-      this.add.text(e.x, enemyY + 20, e.name, {
-        fontSize: '5px',
-        fontFamily: 'monospace',
-        color: '#FFFFFF'
-      }).setOrigin(0.5);
+    // Create collision layer
+    this.collisionLayer = this.map.createLayer('collision', tileset, 0, 0);
+    if (this.collisionLayer) {
+      this.collisionLayer.setDepth(GAME.LAYER_TILES);
+
+      // Set collision on floor tiles (tile index 1 in data = gid 1 in tileset)
+      // Tiles with index 1 are floor tiles that should block movement from below
+      this.collisionLayer.setCollisionByExclusion([-1, 0]);
+    }
+
+    console.log('Tilemap loaded:', this.map.width, 'x', this.map.height, 'tiles');
+  }
+
+  parseObjects() {
+    // Get objects layer
+    const objectLayer = this.map.getObjectLayer('objects');
+
+    if (!objectLayer) {
+      console.warn('No objects layer found in tilemap');
+      return;
+    }
+
+    // Storage for different object types
+    this.spawnPoints = {
+      player: null,
+      enemies: [],
+      doors: [],
+      elevators: [],
+      stairs: [],
+      conveyors: []
+    };
+
+    // Parse each object
+    objectLayer.objects.forEach(obj => {
+      const props = this.getObjectProperties(obj);
+
+      switch (obj.name) {
+        case 'player_spawn':
+          this.spawnPoints.player = { x: obj.x, y: obj.y };
+          console.log('Player spawn:', obj.x, obj.y);
+          break;
+
+        case 'enemy_spawn':
+          this.spawnPoints.enemies.push({
+            x: obj.x,
+            y: obj.y,
+            type: props.type || 'inspector'
+          });
+          console.log('Enemy spawn:', props.type, 'at', obj.x, obj.y);
+          break;
+
+        case 'door':
+          this.spawnPoints.doors.push({
+            x: obj.x,
+            y: obj.y,
+            floor: props.floor || 0
+          });
+          console.log('Door:', 'floor', props.floor, 'at', obj.x, obj.y);
+          break;
+
+        case 'elevator':
+          this.spawnPoints.elevators.push({
+            x: obj.x,
+            y: obj.y,
+            id: props.id || 0
+          });
+          console.log('Elevator:', props.id, 'at', obj.x, obj.y);
+          break;
+
+        case 'stairs':
+          this.spawnPoints.stairs.push({
+            x: obj.x,
+            y: obj.y,
+            connectsAbove: props.connects_floor_above,
+            connectsBelow: props.connects_floor_below
+          });
+          console.log('Stairs: floors', props.connects_floor_below, '-', props.connects_floor_above, 'at', obj.x, obj.y);
+          break;
+
+        case 'conveyor':
+          this.spawnPoints.conveyors.push({
+            x: obj.x,
+            y: obj.y,
+            floor: props.floor || 0,
+            direction: props.direction || 1,
+            length: props.length || 64
+          });
+          console.log('Conveyor: floor', props.floor, 'dir', props.direction, 'at', obj.x, obj.y);
+          break;
+      }
     });
 
-    // Items
-    const itemY = 150;
-    const items = ['Pass', 'Key', 'Camera', 'Bulb'];
-    items.forEach((name, i) => {
-      this.add.sprite(80 + i * 50, itemY, 'items', i);
-      this.add.text(80 + i * 50, itemY + 15, name, {
-        fontSize: '5px',
-        fontFamily: 'monospace',
-        color: '#FFFFFF'
-      }).setOrigin(0.5);
+    // Log summary
+    console.log('=== Objects Summary ===');
+    console.log('Doors:', this.spawnPoints.doors.length);
+    console.log('Elevators:', this.spawnPoints.elevators.length);
+    console.log('Stairs:', this.spawnPoints.stairs.length);
+    console.log('Enemies:', this.spawnPoints.enemies.length);
+    console.log('Conveyors:', this.spawnPoints.conveyors.length);
+
+    // Visualize spawn points for debugging
+    this.visualizeSpawnPoints();
+  }
+
+  getObjectProperties(obj) {
+    const props = {};
+    if (obj.properties) {
+      obj.properties.forEach(p => {
+        props[p.name] = p.value;
+      });
+    }
+    return props;
+  }
+
+  visualizeSpawnPoints() {
+    // Draw markers for all spawn points (debug visualization)
+    const graphics = this.add.graphics();
+    graphics.setDepth(GAME.LAYER_HUD);
+
+    // Player spawn - cyan
+    if (this.spawnPoints.player) {
+      graphics.fillStyle(C64_PALETTE.CYAN, 0.8);
+      graphics.fillCircle(this.spawnPoints.player.x, this.spawnPoints.player.y, 4);
+    }
+
+    // Enemy spawns - red
+    graphics.fillStyle(C64_PALETTE.RED, 0.8);
+    this.spawnPoints.enemies.forEach(e => {
+      graphics.fillCircle(e.x, e.y, 3);
     });
 
-    // Door animation test
-    const door = this.add.sprite(290, 80, 'doors', 0);
-    this.add.text(290, 110, 'Door', {
-      fontSize: '5px',
-      fontFamily: 'monospace',
-      color: '#FFFFFF'
-    }).setOrigin(0.5);
-
-    // Animate door opening/closing
-    this.time.addEvent({
-      delay: 2000,
-      callback: () => {
-        if (door.frame.name === 0) {
-          door.play('door_open');
-        } else {
-          door.play('door_close');
-        }
-      },
-      loop: true
+    // Doors - yellow
+    graphics.fillStyle(C64_PALETTE.YELLOW, 0.8);
+    this.spawnPoints.doors.forEach(d => {
+      graphics.fillRect(d.x - 4, d.y - 8, 8, 16);
     });
 
-    // Polly
-    const polly = this.add.sprite(290, 150, 'polly', 0);
-    polly.play('polly_pose');
-    this.add.text(290, 170, 'Polly', {
-      fontSize: '5px',
-      fontFamily: 'monospace',
-      color: '#FFFFFF'
-    }).setOrigin(0.5);
+    // Elevators - light blue vertical lines
+    graphics.lineStyle(2, C64_PALETTE.LIGHT_BLUE, 0.8);
+    this.spawnPoints.elevators.forEach(e => {
+      graphics.lineBetween(e.x, 16, e.x, GAME.HEIGHT - 8);
+    });
+
+    // Stairs - green diagonal
+    graphics.lineStyle(3, C64_PALETTE.GREEN, 0.8);
+    this.spawnPoints.stairs.forEach(s => {
+      graphics.lineBetween(s.x - 16, s.y + 24, s.x + 16, s.y - 24);
+    });
+
+    // Conveyors - orange horizontal
+    graphics.lineStyle(2, C64_PALETTE.ORANGE, 0.8);
+    this.spawnPoints.conveyors.forEach(c => {
+      graphics.lineBetween(c.x, c.y, c.x + c.length, c.y);
+    });
+  }
+
+  createTestPlayer() {
+    // Create a test sprite at player spawn to verify collision
+    const spawnX = this.spawnPoints.player ? this.spawnPoints.player.x : 32;
+    const spawnY = this.spawnPoints.player ? this.spawnPoints.player.y : 176;
+
+    this.testPlayer = this.physics.add.sprite(spawnX, spawnY, 'player', 0);
+    this.testPlayer.setDepth(GAME.LAYER_PLAYER);
+    this.testPlayer.setCollideWorldBounds(true);
+    this.testPlayer.setBounce(0);
+
+    // Add collision with tilemap
+    if (this.collisionLayer) {
+      this.physics.add.collider(this.testPlayer, this.collisionLayer);
+    }
+
+    // Play walk animation
+    this.testPlayer.play('player_walk');
   }
 
   update(time, delta) {
-    // Game logic will go here
+    if (!this.testPlayer) return;
+
+    // Reset velocity
+    this.testPlayer.setVelocity(0);
+
+    // Handle input
+    if (this.cursors.left.isDown) {
+      this.testPlayer.setVelocityX(-GAME.PLAYER_SPEED);
+      this.testPlayer.setFlipX(true);
+      this.testPlayer.play('player_walk', true);
+    } else if (this.cursors.right.isDown) {
+      this.testPlayer.setVelocityX(GAME.PLAYER_SPEED);
+      this.testPlayer.setFlipX(false);
+      this.testPlayer.play('player_walk', true);
+    } else if (this.cursors.up.isDown) {
+      this.testPlayer.setVelocityY(-GAME.PLAYER_SPEED);
+      this.testPlayer.play('player_walk', true);
+    } else if (this.cursors.down.isDown) {
+      this.testPlayer.setVelocityY(GAME.PLAYER_SPEED);
+      this.testPlayer.play('player_walk', true);
+    } else {
+      this.testPlayer.play('player_idle', true);
+    }
   }
 }

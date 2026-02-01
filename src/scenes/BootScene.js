@@ -39,8 +39,9 @@ export class BootScene extends Phaser.Scene {
       frameHeight: 21
     });
 
-    // Load tileset
+    // Load tileset and tilemap
     this.load.image('tileset', 'assets/sprites/tileset.png');
+    this.load.tilemapTiledJSON('level1', 'assets/tilemaps/level1.json');
   }
 
   createLoadingBar() {
