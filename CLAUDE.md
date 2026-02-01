@@ -142,8 +142,35 @@ this.soundManager.play('item_pickup');
 - Death/respawn cycle works
 - Win sequence triggers with all items + photograph
 
+## Agent Handover Workflow
+
+When working on this project, follow this workflow to enable smooth handovers:
+
+### Starting Work (New Agent)
+1. Read this CLAUDE.md file first
+2. Check **docs/project-status.txt** for current state and next steps
+3. Review the relevant phase in docs/plan.md
+4. Run `npm install && npm run dev` to verify setup
+
+### Completing Work (Before Handover)
+1. Update **docs/project-status.txt** with:
+   - Mark completed phase as done with commit hash
+   - Update "Current State" section
+   - Verify "Next Phase" tasks are accurate
+2. Commit all changes with descriptive message
+3. Push to GitHub
+4. Include `Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>` in commits
+
+### Project Status File
+The **docs/project-status.txt** file contains:
+- Completed phases with commit references
+- Current working state
+- Next phase tasks and verification criteria
+- Handover notes for new agents
+
 ## Documentation Reference
 
+- **docs/project-status.txt** - Current state & handover info (CHECK FIRST)
 - **docs/prd.md** - User stories, acceptance criteria, requirements
 - **docs/tdd.md** - Data structures, algorithms, code examples
 - **docs/plan.md** - Phase-by-phase implementation tasks

@@ -600,6 +600,18 @@ Stairs         │
 4. No performance issues (steady 60fps)
 5. Scene transitions work
 
+### Handover Workflow (IMPORTANT)
+After completing each phase:
+1. Update **docs/project-status.txt** with completed work and next steps
+2. Commit all changes with descriptive message
+3. Push to GitHub
+4. Include `Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>` in commits
+
+When starting work on a new phase:
+1. Check **docs/project-status.txt** for current state
+2. Verify the previous phase is complete
+3. Run `npm install && npm run dev` to confirm setup works
+
 ---
 
 
