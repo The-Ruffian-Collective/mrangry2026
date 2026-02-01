@@ -12,6 +12,7 @@
     "phaser": "^3.80.1"
   },
   "devDependencies": {
+    "canvas": "^3.2.1",
     "vite": "^5.4.2"
   }
 }
