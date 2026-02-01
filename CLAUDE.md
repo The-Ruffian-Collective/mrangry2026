@@ -154,12 +154,16 @@ When working on this project, follow this workflow to enable smooth handovers:
 
 ### Completing Work (Before Handover)
 1. Update **docs/project-status.txt** with:
-   - Mark completed phase as done with commit hash
+   - Mark completed phase as done (commit hash pending)
    - Update "Current State" section
    - Verify "Next Phase" tasks are accurate
-2. Commit all changes with descriptive message
-3. Push to GitHub
-4. Include `Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>` in commits
+2. **USER VERIFICATION STEP** (Required before committing):
+   - Notify user that phase is complete and ready for review
+   - User will test the game at localhost:3000
+   - Wait for user approval: **YEY** (proceed) or **NEY** (fix issues)
+3. Once approved, commit all changes with descriptive message
+4. Push to GitHub
+5. Include `Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>` in commits
 
 ### Project Status File
 The **docs/project-status.txt** file contains:

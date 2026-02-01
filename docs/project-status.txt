@@ -128,7 +128,9 @@ HANDOVER NOTES FOR NEW AGENTS
 4. Run `npm install && npm run dev` to verify setup works
 5. After completing a phase:
    - Update this project-status.txt file
-   - Commit all changes with descriptive message
+   - **REQUEST USER VERIFICATION** - Let user test at localhost:3000
+   - Wait for YEY (approve) or NEY (fix issues) before committing
+   - Once approved, commit all changes with descriptive message
    - Push to GitHub
    - Include "Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
