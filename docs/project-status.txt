@@ -2,8 +2,8 @@
 MR. ANGRY 2026 - PROJECT STATUS
 ================================================================================
 Last Updated: 2026-02-02
-Current Phase: Phase 6 COMPLETE (pending verification)
-Next Phase: Phase 7 - Enemy AI & Collisions
+Current Phase: Phase 7 COMPLETE (pending verification)
+Next Phase: Phase 8 - Win Condition, HUD & Audio
 ================================================================================
 
 COMPLETED PHASES
@@ -94,7 +94,7 @@ COMPLETED PHASES
       * handleStairInput() - refactored stair entry
       * Conveyor check disabled while on elevator/stairs
 
-[✓] PHASE 6: Doors, Items & Mr. Angry (Commit: pending)
+[✓] PHASE 6: Doors, Items & Mr. Angry (Commit: 7068085)
     - Created src/systems/DoorManager.js:
       * Manages 10 doors across 4 floors
       * Door state machine (CLOSED, OPENING, OPEN)
@@ -119,6 +119,34 @@ COMPLETED PHASES
       * Items brighten when collected
       * Updated control hints for SPACE key
 
+[✓] PHASE 7: Enemy AI & Collisions (Commit: pending)
+    - Created src/entities/Enemy.js:
+      * Base class for Inspector, Manager, Patron enemies
+      * Configurable enemy type with color and frame mapping
+      * State management compatible with EnemyAI system
+      * Movement methods: moveTowardX(), moveTowardY()
+      * Elevator/stair enter/exit support
+      * Standard enemy speed (60 px/s)
+    - Created src/systems/EnemyAI.js:
+      * Waypoint-based pathfinding system
+      * Builds navigation graph from level data
+      * Calculates paths using elevators and stairs
+      * Enemies avoid conveyor belts
+      * 500ms repath interval for responsive pursuit
+      * handleElevatorMovement() - AI-controlled elevator riding
+      * handleStairMovement() - diagonal stair traversal
+    - Updated src/entities/MrAngry.js:
+      * Now compatible with EnemyAI system
+      * Full pathfinding across floors
+      * Maintains faster speed (90 px/s)
+      * Retains dramatic awakening effect
+    - Updated GameScene.js:
+      * Creates enemies physics group
+      * Spawns Inspector, Manager, Patron at game start
+      * Integrates EnemyAI system
+      * Enemy-player collision triggers death
+      * All enemies managed through central AI update
+
 --------------------------------------------------------------------------------
 
 CURRENT STATE
@@ -137,15 +165,20 @@ Working Features:
 - DOOR SYSTEM: 10 doors with open animation on SPACE key
 - ITEM SYSTEM: 4 items randomly placed, collectible with overlap
 - INVENTORY HUD: Shows collected items at bottom left
-- MR. ANGRY: Awakens when his door is opened, chases player
+- MR. ANGRY: Awakens when his door is opened, pursues with full AI
+- ENEMY AI: Inspector, Manager, Patron pursue player across floors
+- PATHFINDING: Enemies use elevators and stairs to reach player
+- CONVEYOR AVOIDANCE: Enemies cannot use conveyor belt
+- DEATH ON CONTACT: Collision with any enemy triggers death
 - Pause toggle with semi-transparent overlay
 - Debug visualization toggle showing all level objects
 - Production build succeeds (npm run build)
 
 Key Files Modified This Phase:
-- src/systems/DoorManager.js (NEW - door and item management)
-- src/entities/MrAngry.js (NEW - special triggered enemy)
-- src/scenes/GameScene.js (MODIFIED - door/item/enemy integration)
+- src/entities/Enemy.js (NEW - base enemy class)
+- src/systems/EnemyAI.js (NEW - pathfinding system)
+- src/entities/MrAngry.js (MODIFIED - integrated with EnemyAI)
+- src/scenes/GameScene.js (MODIFIED - enemy spawn and AI integration)
 
 Controls:
 - Arrow Keys / WASD: Move player
@@ -166,31 +199,39 @@ Test Commands:
 
 --------------------------------------------------------------------------------
 
-NEXT PHASE: Phase 7 - Enemy AI & Collisions
---------------------------------------------
+NEXT PHASE: Phase 8 - Win Condition, HUD & Audio
+------------------------------------------------
 
-Objective: Implement remaining enemies and pathfinding AI.
+Objective: Complete gameplay loop with win condition, UI, and sound.
 
 Tasks:
-[ ] 7.1 Create src/entities/Enemy.js base class
-[ ] 7.2 Create Inspector, Manager, Patron enemy types
-[ ] 7.3 Implement src/systems/EnemyAI.js with waypoint pathfinding
-[ ] 7.4 Enemies use elevators and stairs to navigate
-[ ] 7.5 Enemies cannot use conveyor belts
-[ ] 7.6 Enemy-player collision triggers death
-[ ] 7.7 AI repath interval (500ms)
+[ ] 8.1 Create src/ui/HUD.js (lives, inventory, timer, score)
+[ ] 8.2 Create src/systems/TimerSystem.js (120s countdown, warning at 30s)
+[ ] 8.3 Implement win condition (all items + photograph Polly)
+[ ] 8.4 Implement scoring system (items + photograph + time bonus)
+[ ] 8.5 Create src/audio/SoundManager.js (ZzFX integration)
+[ ] 8.6 Add sound effects (door, pickup, death, etc.)
+[ ] 8.7 Implement mute toggle (M key)
+[ ] 8.8 Update pause system
+[ ] 8.9 Update GameOverScene with final score and high score
+[ ] 8.10 Optional: TouchControls for mobile
 
 Verification Criteria:
-- All 3 starting enemies spawn and pursue player
-- Enemies use elevators and stairs to reach player's floor
-- Enemies avoid conveyor belt
-- Collision with any enemy triggers death
-- Mr. Angry (from Phase 6) integrates with enemy system
+- HUD displays lives, inventory, timer, score correctly
+- Timer counts down from 120 seconds
+- Timer warning at 30 seconds
+- Timer expiration triggers death
+- Goal door only opens with all 4 items
+- Photographing Polly triggers win sequence
+- Score calculated correctly (items + photograph + time bonus)
+- All sound effects play at correct moments
+- Mute toggle works
+- Full gameplay loop: Start → Play → Win/Lose → Restart
 
 Reference Docs:
 - docs/plan.md (full task breakdown)
-- docs/tdd.md (EnemyAI class structure)
-- docs/prd.md (US-006: Enemy AI)
+- docs/tdd.md (HUD, Timer, Sound structures)
+- docs/prd.md (US-007: Timer, US-008: Win Condition)
 
 --------------------------------------------------------------------------------
 
@@ -199,7 +240,7 @@ REPOSITORY
 
 Remote: https://github.com/The-Ruffian-Collective/mrangry2026.git
 Branch: main
-Latest Commit: 6059db0 (Phase 5)
+Latest Commit: 7068085 (Phase 6)
 
 --------------------------------------------------------------------------------
 
@@ -219,14 +260,14 @@ HANDOVER NOTES FOR NEW AGENTS
    - Push to GitHub
    - Include "Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
-Phase 6 Notes:
-- DoorManager randomizes items each game (4 items, 1 Mr. Angry, 1 Polly)
-- Polly always at leftmost door on floor 3 (goal door)
-- Items spawn in front of doors with bounce animation
-- Item collection uses physics overlap (automatic on touch)
-- Mr. Angry awakens with screen flash and shake effect
-- Mr. Angry has simple same-floor chase AI (Phase 7 adds full pathfinding)
-- Inventory icons dim (0.3 alpha) until collected, then full (1.0 alpha)
-- SPACE key opens doors when within 20px proximity
+Phase 7 Notes:
+- EnemyAI uses waypoint-based navigation (not full A*)
+- Enemies recalculate paths every 500ms for responsive pursuit
+- Elevators can only have one rider at a time (player OR enemy)
+- Enemies avoid conveyors by finding nearest exit point
+- Mr. Angry now uses full pathfinding (not just same-floor chase)
+- All enemies added to physics group for centralized collision
+- Enemy types: inspector (red), manager (purple), patron (green), mr_angry (light red)
+- Enemy frames: inspector=0-3, manager=4-7, patron=8-11, mr_angry=12-15
 
 ================================================================================

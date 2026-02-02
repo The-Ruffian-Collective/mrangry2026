@@ -2,8 +2,10 @@ import Phaser from 'phaser';
 import { C64_PALETTE } from '../constants/palette.js';
 import { GAME } from '../constants/game.js';
 import { Player } from '../entities/Player.js';
+import { Enemy } from '../entities/Enemy.js';
 import { ElevatorSystem } from '../systems/ElevatorSystem.js';
 import { DoorManager } from '../systems/DoorManager.js';
+import { EnemyAI } from '../systems/EnemyAI.js';
 import { MrAngry } from '../entities/MrAngry.js';
 
 /**
@@ -53,12 +55,25 @@ export class GameScene extends Phaser.Scene {
     // Setup item collection
     this.setupItemCollection();
 
+    // Create enemy AI system (Phase 7)
+    this.enemyAI = new EnemyAI(this);
+    this.enemyAI.init({
+      elevators: this.spawnPoints.elevators,
+      stairs: this.spawnPoints.stairs,
+      conveyors: this.spawnPoints.conveyors
+    });
+
+    // Create enemies group and spawn initial enemies (Phase 7)
+    this.enemies = this.physics.add.group();
+    this.createEnemies();
+
     // Listen for Mr. Angry awakening event
     this.mrAngry = null;
     this.events.on('mrAngryAwakened', this.spawnMrAngry, this);
 
     // Debug visualization (toggle with D key)
     this.debugGraphics = null;
+    this.debugDynamicGraphics = null; // Separate graphics for dynamic elements (cleared each frame)
     this.showDebug = false;
   }
 
@@ -200,6 +215,34 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
+   * Create initial enemies (Inspector, Manager, Patron)
+   */
+  createEnemies() {
+    this.spawnPoints.enemies.forEach(spawnPoint => {
+      const enemy = new Enemy(this, spawnPoint.x, spawnPoint.y, spawnPoint.type);
+
+      // Add to enemies group
+      this.enemies.add(enemy);
+
+      // Add collision with collision layer
+      this.physics.add.collider(enemy, this.collisionLayer);
+
+      console.log(`Spawned ${spawnPoint.type} at:`, spawnPoint.x, spawnPoint.y);
+    });
+
+    // Setup enemy-player collision
+    this.physics.add.overlap(
+      this.player,
+      this.enemies,
+      this.handleEnemyCollision,
+      null,
+      this
+    );
+
+    console.log(`Created ${this.enemies.getLength()} enemies`);
+  }
+
+  /**
    * Setup keyboard and gamepad input
    */
   setupInput() {
@@ -297,6 +340,8 @@ export class GameScene extends Phaser.Scene {
       this
     );
 
+    // Add to enemies group so AI can manage it
+    // Note: Mr. Angry is handled by EnemyAI in update loop
     console.log('Mr. Angry spawned!');
   }
 
@@ -439,9 +484,18 @@ export class GameScene extends Phaser.Scene {
 
     if (this.showDebug) {
       this.createDebugVisualization();
-    } else if (this.debugGraphics) {
-      this.debugGraphics.destroy();
-      this.debugGraphics = null;
+      // Create separate graphics for dynamic elements
+      this.debugDynamicGraphics = this.add.graphics();
+      this.debugDynamicGraphics.setDepth(GAME.LAYER_HUD + 1);
+    } else {
+      if (this.debugGraphics) {
+        this.debugGraphics.destroy();
+        this.debugGraphics = null;
+      }
+      if (this.debugDynamicGraphics) {
+        this.debugDynamicGraphics.destroy();
+        this.debugDynamicGraphics = null;
+      }
     }
   }
 
@@ -620,7 +674,22 @@ export class GameScene extends Phaser.Scene {
     // Update player
     this.player.update(time, delta, input);
 
-    // Update Mr. Angry if spawned
+    // Update enemies via AI system (Phase 7)
+    if (this.enemyAI && this.enemies) {
+      // Get all enemies including Mr. Angry
+      const allEnemies = this.enemies.getChildren().slice();
+      if (this.mrAngry && this.mrAngry.isAwake) {
+        allEnemies.push(this.mrAngry);
+      }
+      this.enemyAI.update(allEnemies, this.player, delta);
+    }
+
+    // Update individual enemy sprites
+    this.enemies.getChildren().forEach(enemy => {
+      enemy.update(time, delta);
+    });
+
+    // Update Mr. Angry if spawned (for animation)
     if (this.mrAngry && this.mrAngry.isAwake) {
       this.mrAngry.update(time, delta, this.player);
     }
@@ -629,10 +698,25 @@ export class GameScene extends Phaser.Scene {
     this.updateHUD();
 
     // Update debug visualization if active
-    if (this.showDebug && this.debugGraphics) {
-      // Redraw player position indicator
-      this.debugGraphics.fillStyle(C64_PALETTE.WHITE, 1);
-      this.debugGraphics.fillCircle(this.player.x, this.player.y, 2);
+    if (this.showDebug && this.debugDynamicGraphics) {
+      // Clear dynamic graphics and redraw player/enemy positions
+      this.debugDynamicGraphics.clear();
+
+      // Player position - white circle
+      this.debugDynamicGraphics.fillStyle(C64_PALETTE.WHITE, 1);
+      this.debugDynamicGraphics.fillCircle(this.player.x, this.player.y, 3);
+
+      // Enemy positions - red circles
+      this.debugDynamicGraphics.fillStyle(C64_PALETTE.LIGHT_RED, 0.8);
+      this.enemies.getChildren().forEach(enemy => {
+        this.debugDynamicGraphics.fillCircle(enemy.x, enemy.y, 3);
+      });
+
+      // Mr. Angry position - orange circle
+      if (this.mrAngry && this.mrAngry.isAwake) {
+        this.debugDynamicGraphics.fillStyle(C64_PALETTE.ORANGE, 1);
+        this.debugDynamicGraphics.fillCircle(this.mrAngry.x, this.mrAngry.y, 4);
+      }
     }
   }
 }

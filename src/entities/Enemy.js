@@ -3,26 +3,54 @@ import { GAME } from '../constants/game.js';
 import { C64_PALETTE } from '../constants/palette.js';
 
 /**
- * MrAngry - Special triggered enemy
- *
- * Mr. Angry is hidden behind a random door and awakens when the player
- * opens that door. He's faster than other enemies and pursues relentlessly
- * using the EnemyAI pathfinding system.
+ * Enemy type configuration
  */
-export class MrAngry extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y) {
-    super(scene, x, y, 'enemies', 12); // Frame 12 is Mr. Angry in enemies spritesheet
+const ENEMY_CONFIG = {
+  inspector: {
+    frame: 0,  // First row in enemies spritesheet
+    speed: GAME.ENEMY_SPEED,
+    color: C64_PALETTE.RED
+  },
+  manager: {
+    frame: 4,  // Second row
+    speed: GAME.ENEMY_SPEED,
+    color: C64_PALETTE.PURPLE
+  },
+  patron: {
+    frame: 8,  // Third row
+    speed: GAME.ENEMY_SPEED,
+    color: C64_PALETTE.GREEN
+  },
+  mr_angry: {
+    frame: 12, // Fourth row
+    speed: GAME.MR_ANGRY_SPEED,
+    color: C64_PALETTE.LIGHT_RED
+  }
+};
+
+/**
+ * Enemy - Base class for hotel staff enemies
+ *
+ * Enemies pursue the player using waypoint-based pathfinding.
+ * They can use elevators and stairs but cannot traverse conveyor belts.
+ */
+export class Enemy extends Phaser.Physics.Arcade.Sprite {
+  constructor(scene, x, y, type = 'inspector') {
+    const config = ENEMY_CONFIG[type] || ENEMY_CONFIG.inspector;
+    super(scene, x, y, 'enemies', config.frame);
 
     // Add to scene and physics
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
-    // Enemy type
-    this.enemyType = 'mr_angry';
+    // Enemy type and config
+    this.enemyType = type;
+    this.config = config;
+    this.moveSpeed = config.speed;
 
-    // State - compatible with EnemyAI system
+    // State management
     this.state = {
-      isActive: false, // Starts inactive until awakened
+      isActive: true,
       isChasing: true,
       currentFloor: this.calculateFloor(y),
       isOnElevator: false,
@@ -34,17 +62,11 @@ export class MrAngry extends Phaser.Physics.Arcade.Sprite {
       pathfindTimer: 0
     };
 
-    // Awake state (separate from active for dramatic effect)
-    this.isAwake = false;
-
-    // Speed - faster than regular enemies
-    this.moveSpeed = GAME.MR_ANGRY_SPEED;
-
     // Reference to current elevator/stairs
     this.currentElevator = null;
     this.currentStair = null;
 
-    // Spawn position
+    // Spawn position for respawn
     this.spawnPosition = { x, y };
 
     // Configure physics body
@@ -53,9 +75,8 @@ export class MrAngry extends Phaser.Physics.Arcade.Sprite {
     // Set depth
     this.setDepth(GAME.LAYER_ENEMIES);
 
-    // Start invisible (awakens with effect)
-    this.setAlpha(0);
-    this.setActive(false);
+    // Start with walk animation
+    this.play(`${type}_walk`);
   }
 
   /**
@@ -67,28 +88,6 @@ export class MrAngry extends Phaser.Physics.Arcade.Sprite {
     this.setBounce(0);
     this.setCollideWorldBounds(true);
     this.body.setAllowGravity(false);
-  }
-
-  /**
-   * Awaken Mr. Angry with dramatic effect
-   */
-  awaken() {
-    this.isAwake = true;
-    this.state.isActive = true;
-    this.setActive(true);
-
-    // Dramatic fade-in
-    this.scene.tweens.add({
-      targets: this,
-      alpha: 1,
-      duration: 500,
-      ease: 'Power2',
-      onComplete: () => {
-        this.play('mr_angry_walk');
-      }
-    });
-
-    console.log('Mr. Angry has awakened at floor', this.state.currentFloor);
   }
 
   /**
@@ -112,19 +111,18 @@ export class MrAngry extends Phaser.Physics.Arcade.Sprite {
 
   /**
    * Main update loop
-   * Movement is now handled by EnemyAI, this just handles animations
    */
-  update(time, delta, player) {
-    if (!this.isAwake || !this.state.isActive) {
+  update(time, delta) {
+    if (!this.state.isActive) {
       return;
     }
 
     // Update current floor
     this.state.currentFloor = this.calculateFloor(this.y);
 
-    // Play walk animation if moving
+    // Play walk animation
     if (this.body.velocity.x !== 0 || this.body.velocity.y !== 0) {
-      this.play('mr_angry_walk', true);
+      this.play(`${this.enemyType}_walk`, true);
     }
   }
 
@@ -213,19 +211,37 @@ export class MrAngry extends Phaser.Physics.Arcade.Sprite {
   }
 
   /**
-   * Reset Mr. Angry (for new game)
+   * Reset to spawn position
    */
   reset() {
-    this.isAwake = false;
-    this.state.isActive = false;
+    this.setPosition(this.spawnPosition.x, this.spawnPosition.y);
+    this.state.currentFloor = this.calculateFloor(this.spawnPosition.y);
     this.state.isOnElevator = false;
     this.state.isOnStairs = false;
     this.state.targetPosition = null;
     this.state.nextWaypoint = null;
     this.currentElevator = null;
     this.currentStair = null;
-    this.setActive(false);
-    this.setAlpha(0);
     this.setVelocity(0, 0);
+  }
+
+  /**
+   * Deactivate enemy
+   */
+  deactivate() {
+    this.state.isActive = false;
+    this.setVisible(false);
+    this.setActive(false);
+    this.body.enable = false;
+  }
+
+  /**
+   * Activate enemy
+   */
+  activate() {
+    this.state.isActive = true;
+    this.setVisible(true);
+    this.setActive(true);
+    this.body.enable = true;
   }
 }
