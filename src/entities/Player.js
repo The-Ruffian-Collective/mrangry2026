@@ -177,33 +177,118 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /**
-   * Handle movement while on elevator (stub for Phase 5)
+   * Handle movement while on elevator
+   * Movement is controlled by ElevatorSystem, player just animates
    */
   handleElevatorMovement(input) {
-    // Will be implemented in Phase 5
+    // Velocity controlled by ElevatorSystem
     this.setVelocity(0, 0);
-    this.play('player_idle', true);
+
+    // Use climb animation while on elevator
+    this.play('player_climb', true);
   }
 
   /**
-   * Handle movement while on stairs (stub for Phase 5)
+   * Enter elevator mode
+   */
+  enterElevator(elevator) {
+    this.state.isOnElevator = true;
+    this.currentElevator = elevator;
+
+    // Snap to elevator X position
+    this.x = elevator.x;
+
+    // Disable vertical collision to pass through floors
+    this.body.checkCollision.up = false;
+    this.body.checkCollision.down = false;
+  }
+
+  /**
+   * Exit elevator mode
+   */
+  exitElevator() {
+    this.state.isOnElevator = false;
+    this.currentElevator = null;
+
+    // Re-enable collision
+    this.body.checkCollision.up = true;
+    this.body.checkCollision.down = true;
+  }
+
+  /**
+   * Handle movement while on stairs
+   * Player moves diagonally, can exit at landings, falls if walking off mid-stair
    */
   handleStairMovement(input) {
-    // Will be implemented in Phase 5
-    // For now, just allow diagonal movement as a preview
+    const stair = this.currentStair;
+    if (!stair) {
+      this.exitStairs();
+      return;
+    }
+
+    // Get stair bounds from connected floors
+    const topFloorY = GAME.FLOORS[stair.connectsAbove];
+    const bottomFloorY = GAME.FLOORS[stair.connectsBelow];
+
+    // Landing tolerance - how close to floor Y to be considered "at landing"
+    const landingTolerance = 6;
+
+    // Check if at a landing (top or bottom of stairs)
+    const atTopLanding = this.y <= topFloorY + landingTolerance;
+    const atBottomLanding = this.y >= bottomFloorY - landingTolerance;
+    const atLanding = atTopLanding || atBottomLanding;
+
+    // Handle horizontal input
+    if (input.left || input.right) {
+      if (atLanding) {
+        // At landing - safe to exit
+        // Snap to floor Y for clean exit
+        if (atTopLanding) {
+          this.y = topFloorY;
+        } else {
+          this.y = bottomFloorY;
+        }
+        this.exitStairs();
+        return;
+      } else {
+        // Mid-stair - fall death!
+        this.die('fall');
+        return;
+      }
+    }
+
+    // Handle vertical movement on stairs
     let velocityX = 0;
     let velocityY = 0;
 
-    if (input.up) {
-      velocityY = -this.moveSpeed * 0.7;
-      velocityX = this.moveSpeed * 0.5; // Stairs go diagonally
-    } else if (input.down) {
-      velocityY = this.moveSpeed * 0.7;
-      velocityX = -this.moveSpeed * 0.5;
+    const stairSpeedY = this.moveSpeed * 0.7;
+    const stairSpeedX = this.moveSpeed * 0.4;
+
+    if (input.up && this.y > topFloorY) {
+      // Move up-right (ascending stairs)
+      velocityY = -stairSpeedY;
+      velocityX = stairSpeedX;
+      this.setFlipX(false);
+    } else if (input.down && this.y < bottomFloorY) {
+      // Move down-left (descending stairs)
+      velocityY = stairSpeedY;
+      velocityX = -stairSpeedX;
+      this.setFlipX(true);
+    }
+
+    // Clamp to stair bounds
+    if (this.y + velocityY * (1 / 60) < topFloorY) {
+      this.y = topFloorY;
+      velocityY = 0;
+    }
+    if (this.y + velocityY * (1 / 60) > bottomFloorY) {
+      this.y = bottomFloorY;
+      velocityY = 0;
     }
 
     this.setVelocity(velocityX, velocityY);
 
+    // Animation
     if (velocityX !== 0 || velocityY !== 0) {
       this.play('player_climb', true);
     } else {
@@ -275,8 +360,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   enterStairs(stair) {
     this.state.isOnStairs = true;
     this.currentStair = stair;
+
     // Snap to stair center X
     this.x = stair.x;
+
+    // Store stair Y bounds for reference
+    this.stairTopY = GAME.FLOORS[stair.connectsAbove];
+    this.stairBottomY = GAME.FLOORS[stair.connectsBelow];
   }
 
   /**

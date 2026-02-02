@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { C64_PALETTE } from '../constants/palette.js';
 import { GAME } from '../constants/game.js';
 import { Player } from '../entities/Player.js';
+import { ElevatorSystem } from '../systems/ElevatorSystem.js';
 
 /**
  * GameScene - Main gameplay scene
@@ -38,6 +39,10 @@ export class GameScene extends Phaser.Scene {
 
     // Create HUD (minimal for Phase 4)
     this.createHUD();
+
+    // Create elevator system (Phase 5)
+    this.elevatorSystem = new ElevatorSystem(this);
+    this.elevatorSystem.createElevators(this.spawnPoints.elevators);
 
     // Debug visualization (toggle with D key)
     this.debugGraphics = null;
@@ -409,6 +414,64 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
+   * Handle elevator input - entry, movement, and exit
+   */
+  handleElevatorInput(input) {
+    const player = this.player;
+
+    if (player.state.isOnElevator) {
+      // Already on elevator - handle movement and exit
+      const elevator = player.currentElevator;
+
+      if (input.up) {
+        this.elevatorSystem.startMoving(elevator, -1); // Up
+      } else if (input.down) {
+        this.elevatorSystem.startMoving(elevator, 1); // Down
+      } else {
+        this.elevatorSystem.stopMoving(elevator);
+      }
+
+      // Exit on horizontal input (only at floor level)
+      if ((input.left || input.right) && this.elevatorSystem.isAtFloor(player.y)) {
+        this.elevatorSystem.exitElevator(player, elevator);
+      }
+    } else if (!player.state.isOnStairs) {
+      // Not on elevator or stairs - check for entry
+      if (input.up || input.down) {
+        const elevator = this.elevatorSystem.getNearbyElevator(player.x, player.y, 20);
+        if (elevator) {
+          this.elevatorSystem.enterElevator(player, elevator);
+          if (input.up) {
+            this.elevatorSystem.startMoving(elevator, -1);
+          } else {
+            this.elevatorSystem.startMoving(elevator, 1);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Handle stair input - entry only (exit handled by Player)
+   */
+  handleStairInput(input) {
+    const player = this.player;
+
+    if (player.state.isOnStairs || player.state.isOnElevator) {
+      // Already on stairs or elevator - exit handled by Player.handleStairMovement
+      return;
+    }
+
+    // Check for stair entry on up/down press
+    if (input.up || input.down) {
+      const nearStairs = player.checkStairs(this.spawnPoints.stairs);
+      if (nearStairs) {
+        player.enterStairs(nearStairs);
+      }
+    }
+  }
+
+  /**
    * Main update loop
    */
   update(time, delta) {
@@ -423,18 +486,18 @@ export class GameScene extends Phaser.Scene {
     // Get input state
     const input = this.getInputState();
 
-    // Check conveyor collisions
-    this.player.checkConveyor(this.spawnPoints.conveyors);
+    // Update elevator system
+    this.elevatorSystem.update(delta);
 
-    // Check stair proximity (for future use)
-    const nearStairs = this.player.checkStairs(this.spawnPoints.stairs);
+    // Handle elevator input (entry, movement, exit)
+    this.handleElevatorInput(input);
 
-    // Handle stair entry/exit
-    if (nearStairs && (input.up || input.down) && !this.player.state.isOnStairs) {
-      this.player.enterStairs(nearStairs);
-    } else if (this.player.state.isOnStairs && (input.left || input.right)) {
-      // Exit stairs on horizontal input
-      this.player.exitStairs();
+    // Handle stair input (entry only - exit handled by Player)
+    this.handleStairInput(input);
+
+    // Check conveyor collisions (only when not on elevator/stairs)
+    if (!this.player.state.isOnElevator && !this.player.state.isOnStairs) {
+      this.player.checkConveyor(this.spawnPoints.conveyors);
     }
 
     // Update player

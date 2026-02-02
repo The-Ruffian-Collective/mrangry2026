@@ -97,13 +97,13 @@ mr-angry-2026/
 
 This project is being developed in phases. See `docs/project-status.txt` for current progress.
 
-### Current Status: Phase 4 Complete
+### Current Status: Phase 5 Complete
 
 - [x] Phase 1: Project Foundation & Phaser Setup
 - [x] Phase 2: Placeholder Graphics & Menu Screen
 - [x] Phase 3: Tilemap & Level Structure
 - [x] Phase 4: Player Movement & Controls
-- [ ] Phase 5: Elevators & Stairs Navigation
+- [x] Phase 5: Elevators & Stairs Navigation
 - [ ] Phase 6: Doors, Items & Mr. Angry
 - [ ] Phase 7: Enemy AI & Collisions
 - [ ] Phase 8: Win Condition, HUD & Audio

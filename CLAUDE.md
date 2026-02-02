@@ -156,6 +156,7 @@ When working on this project, follow this workflow to enable smooth handovers:
 1. Update **docs/project-status.txt** with:
    - Mark completed phase as done (commit hash pending)
    - Update "Current State" section
+   - Update the README.md file
    - Verify "Next Phase" tasks are accurate
 2. **USER VERIFICATION STEP** (Required before committing):
    - Notify user that phase is complete and ready for review

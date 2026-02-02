@@ -1,9 +1,9 @@
 ================================================================================
 MR. ANGRY 2026 - PROJECT STATUS
 ================================================================================
-Last Updated: 2026-02-01
-Current Phase: Phase 4 COMPLETE
-Next Phase: Phase 5 - Elevators & Stairs Navigation
+Last Updated: 2026-02-02
+Current Phase: Phase 5 COMPLETE (pending verification)
+Next Phase: Phase 6 - Doors, Items & Mr. Angry
 ================================================================================
 
 COMPLETED PHASES
@@ -50,7 +50,7 @@ COMPLETED PHASES
     - Object layer parsing extracts all spawn points
     - Floor Y-positions added to game constants
 
-[✓] PHASE 4: Player Movement & Controls (Commit: 3a280a0)
+[✓] PHASE 4: Player Movement & Controls (Commit: c884525)
     - Created src/entities/Player.js class:
       * Extends Phaser.Physics.Arcade.Sprite
       * Full state management (lives, inventory, position states)
@@ -72,6 +72,28 @@ COMPLETED PHASES
       * Camera flash effects (yellow for items, red for death)
       * Invulnerability flicker after respawn
 
+[✓] PHASE 5: Elevators & Stairs Navigation (Commit: pending)
+    - Created src/systems/ElevatorSystem.js:
+      * Manages elevator platforms (16x4 gray rectangles)
+      * Handles elevator entry/exit with rider tracking
+      * Smooth vertical movement at 40 px/s
+      * Floor detection and snapping (4px tolerance)
+      * getNearbyElevator() for proximity detection
+    - Updated Player.js for elevator support:
+      * enterElevator() - snaps to X, disables vertical collision
+      * exitElevator() - re-enables collision
+      * handleElevatorMovement() - uses climb animation
+    - Enhanced stair movement in Player.js:
+      * Diagonal movement (70% vertical, 40% horizontal speed)
+      * Landing detection at top/bottom of stairs
+      * Fall death when walking off mid-stair
+      * Automatic floor snapping on exit
+    - Updated GameScene.js:
+      * Integrates ElevatorSystem
+      * handleElevatorInput() - entry, movement, exit logic
+      * handleStairInput() - refactored stair entry
+      * Conveyor check disabled while on elevator/stairs
+
 --------------------------------------------------------------------------------
 
 CURRENT STATE
@@ -83,20 +105,28 @@ Working Features:
 - Smooth horizontal movement with Arrow keys or WASD
 - Player blocked by floor/wall collision tiles
 - Sprite flipping based on movement direction
-- Walk/idle animation switching
+- Walk/idle/climb animation switching
 - Conveyor belt detection (pushes player when on it)
-- Stair proximity detection (entry with up/down)
+- ELEVATOR SYSTEM: Player can ride elevators between all 4 floors
+- STAIR SYSTEM: Player can ascend/descend stairs diagonally
+- FALL DEATH: Walking off stairs mid-climb triggers death
 - Pause toggle with semi-transparent overlay
 - Debug visualization toggle showing all level objects
 - HUD displaying lives (hearts), score, floor number
 - Production build succeeds (npm run build)
 
 Key Files Modified This Phase:
-- src/entities/Player.js (NEW - complete Player class)
-- src/scenes/GameScene.js (rewritten - full game integration)
+- src/systems/ElevatorSystem.js (NEW - elevator management system)
+- src/entities/Player.js (MODIFIED - elevator/stair methods)
+- src/scenes/GameScene.js (MODIFIED - elevator integration)
 
 Controls:
 - Arrow Keys / WASD: Move player
+- Up/Down near elevator: Enter elevator, move up/down
+- Left/Right on elevator at floor: Exit elevator
+- Up/Down near stairs: Enter stairs, move diagonally
+- Left/Right at stair landing: Exit stairs
+- Left/Right mid-stair: FALL DEATH
 - P: Toggle pause
 - D: Toggle debug visualization
 - G: Go to Game Over (dev)
@@ -109,32 +139,32 @@ Test Commands:
 
 --------------------------------------------------------------------------------
 
-NEXT PHASE: Phase 5 - Elevators & Stairs Navigation
-----------------------------------------------------
+NEXT PHASE: Phase 6 - Doors, Items & Mr. Angry
+-----------------------------------------------
 
-Objective: Implement vertical traversal systems.
+Objective: Implement doors, collectible items, and the Mr. Angry enemy trigger.
 
 Tasks:
-[ ] 5.1 Create src/systems/ElevatorSystem.js
-[ ] 5.2 Implement elevator entry (snap to X, set state)
-[ ] 5.3 Implement elevator movement (up/down input moves platform)
-[ ] 5.4 Implement elevator exit (left/right to exit)
-[ ] 5.5 Implement full stair traversal (diagonal movement)
-[ ] 5.6 Implement stair exit (reaching top/bottom)
-[ ] 5.7 Implement fall death on stairs
+[ ] 6.1 Create src/systems/DoorManager.js
+[ ] 6.2 Implement door sprites and open/close animation
+[ ] 6.3 Randomly place items behind 4 doors at level start
+[ ] 6.4 Implement item collection (pass, key, camera, bulb)
+[ ] 6.5 Update HUD to show collected items
+[ ] 6.6 Implement Mr. Angry trigger door
+[ ] 6.7 Spawn Mr. Angry enemy when his door is opened
 
 Verification Criteria:
-- Player can ride elevators between all floors
-- Elevator stops at floor boundaries
-- Player can exit elevator on any floor
-- Player can ascend/descend stairs diagonally
-- Falling from stairs triggers death
-- Player respawns after death
+- Doors render on each floor
+- Player can open doors with action key
+- Items appear behind random doors
+- Items can be collected and appear in HUD
+- Mr. Angry door triggers enemy spawn
+- Level replayable with different item placement
 
 Reference Docs:
 - docs/plan.md (full task breakdown)
-- docs/tdd.md (ElevatorSystem class structure)
-- docs/prd.md (US-005: Vertical Navigation)
+- docs/tdd.md (DoorManager class structure)
+- docs/prd.md (US-003: Item Collection)
 
 --------------------------------------------------------------------------------
 
@@ -143,7 +173,7 @@ REPOSITORY
 
 Remote: https://github.com/The-Ruffian-Collective/mrangry2026.git
 Branch: main
-Latest Commit: 3a280a0 (Phase 4)
+Latest Commit: c884525 (Phase 4)
 
 --------------------------------------------------------------------------------
 
@@ -156,18 +186,20 @@ HANDOVER NOTES FOR NEW AGENTS
 4. Run `npm install && npm run dev` to verify setup works
 5. After completing a phase:
    - Update this project-status.txt file
+   - Update the README.md file
    - **REQUEST USER VERIFICATION** - Let user test at localhost:3000
    - Wait for YEY (approve) or NEY (fix issues) before committing
    - Once approved, commit all changes with descriptive message
    - Push to GitHub
    - Include "Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
-Phase 4 Notes:
-- Player class handles all movement states internally
-- GameScene passes input state to player.update() each frame
-- Conveyor detection uses floor matching + X range checking
-- Stair detection uses proximity (20px threshold)
-- Debug mode (D key) is very useful for visualizing level layout
-- Pause mode freezes physics but keeps rendering
+Phase 5 Notes:
+- ElevatorSystem manages elevator platforms as simple rectangles
+- Player collision bypass: checkCollision.up/down disabled while on elevator
+- Elevator exit only allowed when isAtFloor() returns true (4px tolerance)
+- Stair fall death: horizontal input while y is between floor landings
+- Stair landing tolerance: 6px from floor Y position
+- Stairs move diagonally: up-right ascending, down-left descending
+- Debug mode (D key) shows elevator shafts and stair positions
 
 ================================================================================
