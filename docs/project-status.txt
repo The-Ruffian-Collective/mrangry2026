@@ -2,8 +2,8 @@
 MR. ANGRY 2026 - PROJECT STATUS
 ================================================================================
 Last Updated: 2026-02-02
-Current Phase: Phase 5 COMPLETE (pending verification)
-Next Phase: Phase 6 - Doors, Items & Mr. Angry
+Current Phase: Phase 6 COMPLETE (pending verification)
+Next Phase: Phase 7 - Enemy AI & Collisions
 ================================================================================
 
 COMPLETED PHASES
@@ -72,7 +72,7 @@ COMPLETED PHASES
       * Camera flash effects (yellow for items, red for death)
       * Invulnerability flicker after respawn
 
-[✓] PHASE 5: Elevators & Stairs Navigation (Commit: pending)
+[✓] PHASE 5: Elevators & Stairs Navigation (Commit: 6059db0)
     - Created src/systems/ElevatorSystem.js:
       * Manages elevator platforms (16x4 gray rectangles)
       * Handles elevator entry/exit with rider tracking
@@ -94,6 +94,31 @@ COMPLETED PHASES
       * handleStairInput() - refactored stair entry
       * Conveyor check disabled while on elevator/stairs
 
+[✓] PHASE 6: Doors, Items & Mr. Angry (Commit: pending)
+    - Created src/systems/DoorManager.js:
+      * Manages 10 doors across 4 floors
+      * Door state machine (CLOSED, OPENING, OPEN)
+      * Randomized item placement (4 items in random doors)
+      * Mr. Angry placed behind random door
+      * Polly fixed at leftmost door on floor 3
+      * Door open animation on SPACE key interaction
+      * Item spawning with bounce animation
+    - Created src/entities/MrAngry.js:
+      * Special triggered enemy (90 px/s - faster than others)
+      * Awakens with dramatic effect (flash, shake)
+      * Simple chase AI on same floor (full AI in Phase 7)
+      * Collision with player triggers death
+    - Updated GameScene.js:
+      * Integrates DoorManager
+      * handleDoorInput() for SPACE key interaction
+      * Item collection with physics overlap
+      * Mr. Angry spawning on door event
+      * Enemy collision handling
+    - Enhanced HUD:
+      * Inventory icons at bottom left (dim until collected)
+      * Items brighten when collected
+      * Updated control hints for SPACE key
+
 --------------------------------------------------------------------------------
 
 CURRENT STATE
@@ -104,29 +129,31 @@ Working Features:
 - Player spawns at correct position with proper physics
 - Smooth horizontal movement with Arrow keys or WASD
 - Player blocked by floor/wall collision tiles
-- Sprite flipping based on movement direction
 - Walk/idle/climb animation switching
 - Conveyor belt detection (pushes player when on it)
 - ELEVATOR SYSTEM: Player can ride elevators between all 4 floors
 - STAIR SYSTEM: Player can ascend/descend stairs diagonally
 - FALL DEATH: Walking off stairs mid-climb triggers death
+- DOOR SYSTEM: 10 doors with open animation on SPACE key
+- ITEM SYSTEM: 4 items randomly placed, collectible with overlap
+- INVENTORY HUD: Shows collected items at bottom left
+- MR. ANGRY: Awakens when his door is opened, chases player
 - Pause toggle with semi-transparent overlay
 - Debug visualization toggle showing all level objects
-- HUD displaying lives (hearts), score, floor number
 - Production build succeeds (npm run build)
 
 Key Files Modified This Phase:
-- src/systems/ElevatorSystem.js (NEW - elevator management system)
-- src/entities/Player.js (MODIFIED - elevator/stair methods)
-- src/scenes/GameScene.js (MODIFIED - elevator integration)
+- src/systems/DoorManager.js (NEW - door and item management)
+- src/entities/MrAngry.js (NEW - special triggered enemy)
+- src/scenes/GameScene.js (MODIFIED - door/item/enemy integration)
 
 Controls:
 - Arrow Keys / WASD: Move player
+- SPACE: Open door (when near)
 - Up/Down near elevator: Enter elevator, move up/down
 - Left/Right on elevator at floor: Exit elevator
 - Up/Down near stairs: Enter stairs, move diagonally
 - Left/Right at stair landing: Exit stairs
-- Left/Right mid-stair: FALL DEATH
 - P: Toggle pause
 - D: Toggle debug visualization
 - G: Go to Game Over (dev)
@@ -139,32 +166,31 @@ Test Commands:
 
 --------------------------------------------------------------------------------
 
-NEXT PHASE: Phase 6 - Doors, Items & Mr. Angry
------------------------------------------------
+NEXT PHASE: Phase 7 - Enemy AI & Collisions
+--------------------------------------------
 
-Objective: Implement doors, collectible items, and the Mr. Angry enemy trigger.
+Objective: Implement remaining enemies and pathfinding AI.
 
 Tasks:
-[ ] 6.1 Create src/systems/DoorManager.js
-[ ] 6.2 Implement door sprites and open/close animation
-[ ] 6.3 Randomly place items behind 4 doors at level start
-[ ] 6.4 Implement item collection (pass, key, camera, bulb)
-[ ] 6.5 Update HUD to show collected items
-[ ] 6.6 Implement Mr. Angry trigger door
-[ ] 6.7 Spawn Mr. Angry enemy when his door is opened
+[ ] 7.1 Create src/entities/Enemy.js base class
+[ ] 7.2 Create Inspector, Manager, Patron enemy types
+[ ] 7.3 Implement src/systems/EnemyAI.js with waypoint pathfinding
+[ ] 7.4 Enemies use elevators and stairs to navigate
+[ ] 7.5 Enemies cannot use conveyor belts
+[ ] 7.6 Enemy-player collision triggers death
+[ ] 7.7 AI repath interval (500ms)
 
 Verification Criteria:
-- Doors render on each floor
-- Player can open doors with action key
-- Items appear behind random doors
-- Items can be collected and appear in HUD
-- Mr. Angry door triggers enemy spawn
-- Level replayable with different item placement
+- All 3 starting enemies spawn and pursue player
+- Enemies use elevators and stairs to reach player's floor
+- Enemies avoid conveyor belt
+- Collision with any enemy triggers death
+- Mr. Angry (from Phase 6) integrates with enemy system
 
 Reference Docs:
 - docs/plan.md (full task breakdown)
-- docs/tdd.md (DoorManager class structure)
-- docs/prd.md (US-003: Item Collection)
+- docs/tdd.md (EnemyAI class structure)
+- docs/prd.md (US-006: Enemy AI)
 
 --------------------------------------------------------------------------------
 
@@ -173,7 +199,7 @@ REPOSITORY
 
 Remote: https://github.com/The-Ruffian-Collective/mrangry2026.git
 Branch: main
-Latest Commit: c884525 (Phase 4)
+Latest Commit: 6059db0 (Phase 5)
 
 --------------------------------------------------------------------------------
 
@@ -193,13 +219,14 @@ HANDOVER NOTES FOR NEW AGENTS
    - Push to GitHub
    - Include "Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
-Phase 5 Notes:
-- ElevatorSystem manages elevator platforms as simple rectangles
-- Player collision bypass: checkCollision.up/down disabled while on elevator
-- Elevator exit only allowed when isAtFloor() returns true (4px tolerance)
-- Stair fall death: horizontal input while y is between floor landings
-- Stair landing tolerance: 6px from floor Y position
-- Stairs move diagonally: up-right ascending, down-left descending
-- Debug mode (D key) shows elevator shafts and stair positions
+Phase 6 Notes:
+- DoorManager randomizes items each game (4 items, 1 Mr. Angry, 1 Polly)
+- Polly always at leftmost door on floor 3 (goal door)
+- Items spawn in front of doors with bounce animation
+- Item collection uses physics overlap (automatic on touch)
+- Mr. Angry awakens with screen flash and shake effect
+- Mr. Angry has simple same-floor chase AI (Phase 7 adds full pathfinding)
+- Inventory icons dim (0.3 alpha) until collected, then full (1.0 alpha)
+- SPACE key opens doors when within 20px proximity
 
 ================================================================================

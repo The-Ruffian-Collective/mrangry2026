@@ -3,6 +3,8 @@ import { C64_PALETTE } from '../constants/palette.js';
 import { GAME } from '../constants/game.js';
 import { Player } from '../entities/Player.js';
 import { ElevatorSystem } from '../systems/ElevatorSystem.js';
+import { DoorManager } from '../systems/DoorManager.js';
+import { MrAngry } from '../entities/MrAngry.js';
 
 /**
  * GameScene - Main gameplay scene
@@ -43,6 +45,17 @@ export class GameScene extends Phaser.Scene {
     // Create elevator system (Phase 5)
     this.elevatorSystem = new ElevatorSystem(this);
     this.elevatorSystem.createElevators(this.spawnPoints.elevators);
+
+    // Create door manager (Phase 6)
+    this.doorManager = new DoorManager(this);
+    this.doorManager.createDoors(this.spawnPoints.doors);
+
+    // Setup item collection
+    this.setupItemCollection();
+
+    // Listen for Mr. Angry awakening event
+    this.mrAngry = null;
+    this.events.on('mrAngryAwakened', this.spawnMrAngry, this);
 
     // Debug visualization (toggle with D key)
     this.debugGraphics = null;
@@ -237,7 +250,67 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Create minimal HUD for Phase 4
+   * Setup item collection overlap
+   */
+  setupItemCollection() {
+    // Add overlap between player and items
+    this.physics.add.overlap(
+      this.player,
+      this.doorManager.getItems(),
+      this.handleItemCollection,
+      null,
+      this
+    );
+  }
+
+  /**
+   * Handle item collection
+   */
+  handleItemCollection(player, item) {
+    const itemType = this.doorManager.collectItem(item);
+    if (itemType) {
+      player.collectItem(itemType);
+      console.log(`Collected: ${itemType}`);
+    }
+  }
+
+  /**
+   * Spawn Mr. Angry when his door is opened
+   */
+  spawnMrAngry(data) {
+    if (this.mrAngry) {
+      return; // Already spawned
+    }
+
+    this.mrAngry = new MrAngry(this, data.x, data.y);
+    this.mrAngry.awaken();
+
+    // Add collision with collision layer
+    this.physics.add.collider(this.mrAngry, this.collisionLayer);
+
+    // Add overlap with player for death
+    this.physics.add.overlap(
+      this.player,
+      this.mrAngry,
+      this.handleEnemyCollision,
+      null,
+      this
+    );
+
+    console.log('Mr. Angry spawned!');
+  }
+
+  /**
+   * Handle collision between player and enemy
+   */
+  handleEnemyCollision(player, enemy) {
+    if (!player.isInvulnerable()) {
+      player.die('enemy');
+    }
+  }
+
+  /**
+   * Create HUD with lives, score, floor, and inventory
    */
   createHUD() {
     // Lives display
@@ -261,12 +334,25 @@ export class GameScene extends Phaser.Scene {
       color: '#FFFFFF'
     }).setOrigin(0.5, 0).setDepth(GAME.LAYER_HUD);
 
-    // Control hints (bottom)
-    this.hintsText = this.add.text(GAME.WIDTH / 2, GAME.HEIGHT - 8, 'ARROWS/WASD: Move | P: Pause | D: Debug', {
+    // Inventory display - item icons at bottom left
+    this.inventoryIcons = {};
+    const itemTypes = ['pass', 'key', 'camera', 'bulb'];
+    const startX = 8;
+    const iconY = GAME.HEIGHT - 20;
+
+    itemTypes.forEach((type, index) => {
+      const icon = this.add.sprite(startX + index * 20, iconY, 'items', index);
+      icon.setDepth(GAME.LAYER_HUD);
+      icon.setAlpha(0.3); // Dim until collected
+      this.inventoryIcons[type] = icon;
+    });
+
+    // Control hints (bottom right)
+    this.hintsText = this.add.text(GAME.WIDTH - 8, GAME.HEIGHT - 8, 'SPACE: Open Door', {
       fontSize: '6px',
       fontFamily: 'monospace',
       color: '#6C6C6C'
-    }).setOrigin(0.5, 1).setDepth(GAME.LAYER_HUD);
+    }).setOrigin(1, 1).setDepth(GAME.LAYER_HUD);
 
     // Pause overlay (hidden initially)
     this.pauseOverlay = this.add.rectangle(
@@ -300,6 +386,21 @@ export class GameScene extends Phaser.Scene {
 
     // Score
     this.scoreText.setText(this.player.score.toString().padStart(6, '0'));
+
+    // Update inventory icons
+    const inv = this.player.state.inventory;
+    if (this.inventoryIcons.pass) {
+      this.inventoryIcons.pass.setAlpha(inv.pass ? 1 : 0.3);
+    }
+    if (this.inventoryIcons.key) {
+      this.inventoryIcons.key.setAlpha(inv.key ? 1 : 0.3);
+    }
+    if (this.inventoryIcons.camera) {
+      this.inventoryIcons.camera.setAlpha(inv.camera ? 1 : 0.3);
+    }
+    if (this.inventoryIcons.bulb) {
+      this.inventoryIcons.bulb.setAlpha(inv.bulb ? 1 : 0.3);
+    }
   }
 
   /**
@@ -472,6 +573,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
+   * Handle door interaction (action key)
+   */
+  handleDoorInput(input) {
+    if (input.action) {
+      // Try to interact with nearby door
+      this.doorManager.interactWithDoor(this.player);
+    }
+  }
+
+  /**
    * Main update loop
    */
   update(time, delta) {
@@ -489,11 +600,17 @@ export class GameScene extends Phaser.Scene {
     // Update elevator system
     this.elevatorSystem.update(delta);
 
+    // Update door manager
+    this.doorManager.update(delta);
+
     // Handle elevator input (entry, movement, exit)
     this.handleElevatorInput(input);
 
     // Handle stair input (entry only - exit handled by Player)
     this.handleStairInput(input);
+
+    // Handle door interaction (action key)
+    this.handleDoorInput(input);
 
     // Check conveyor collisions (only when not on elevator/stairs)
     if (!this.player.state.isOnElevator && !this.player.state.isOnStairs) {
@@ -502,6 +619,11 @@ export class GameScene extends Phaser.Scene {
 
     // Update player
     this.player.update(time, delta, input);
+
+    // Update Mr. Angry if spawned
+    if (this.mrAngry && this.mrAngry.isAwake) {
+      this.mrAngry.update(time, delta, this.player);
+    }
 
     // Update HUD
     this.updateHUD();
