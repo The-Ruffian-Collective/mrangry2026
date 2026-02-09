@@ -1,9 +1,9 @@
 ================================================================================
 MR. ANGRY 2026 - PROJECT STATUS
 ================================================================================
-Last Updated: 2026-02-02
-Current Phase: Phase 7 COMPLETE (pending verification)
-Next Phase: Phase 8 - Win Condition, HUD & Audio
+Last Updated: 2026-02-09
+Current Phase: Phase 8 COMPLETE (pending verification)
+Next Phase: GAME COMPLETE - Polish & Optimization (Optional)
 ================================================================================
 
 COMPLETED PHASES
@@ -119,7 +119,7 @@ COMPLETED PHASES
       * Items brighten when collected
       * Updated control hints for SPACE key
 
-[✓] PHASE 7: Enemy AI & Collisions (Commit: pending)
+[✓] PHASE 7: Enemy AI & Collisions (Commit: 356360e)
     - Created src/entities/Enemy.js:
       * Base class for Inspector, Manager, Patron enemies
       * Configurable enemy type with color and frame mapping
@@ -147,6 +147,45 @@ COMPLETED PHASES
       * Enemy-player collision triggers death
       * All enemies managed through central AI update
 
+[✓] PHASE 8: Win Condition, HUD & Audio (Commit: pending)
+    - Created src/systems/TimerSystem.js:
+      * 120 second countdown timer
+      * Warning state at 30 seconds remaining
+      * Timer expiration triggers player death
+      * Pause/resume support
+      * Time bonus calculation for scoring
+    - Created src/audio/SoundManager.js:
+      * ZzFX procedural audio implementation (inline)
+      * Sound effects: door_open, item_pickup, death, mr_angry_wake,
+        photograph, timer_warning, level_complete, elevator, step,
+        ui_select, game_over
+      * Mute toggle with M key
+      * Auto-initialization on first use
+    - Created src/ui/HUD.js:
+      * Lives display (heart symbols, top-left)
+      * Timer display (MM:SS, top-center, flashes when warning)
+      * Score display (6-digit, top-right)
+      * Floor indicator (top-right)
+      * Inventory icons (bottom-left, dim until collected)
+      * Status messages (win/need items)
+      * Mute indicator
+      * Control hints
+    - Updated GameScene.js:
+      * Integrates TimerSystem, SoundManager, HUD
+      * Win condition: all 4 items + photograph Polly
+      * tryPhotographPolly() - checks items and triggers win
+      * handleWin() - victory sequence with time bonus
+      * Sound effects on all events (door, item, death, etc.)
+      * Timer warning beeps every second when < 30s
+      * Pause also pauses timer
+    - Updated GameOverScene.js:
+      * Differentiates win ("SCOOP!") vs lose ("GAME OVER")
+      * Displays final score with animation
+      * High score persistence (localStorage)
+      * "NEW HIGH SCORE" indicator when beaten
+      * Time bonus display for wins
+      * SPACE to play again, ESC for menu
+
 --------------------------------------------------------------------------------
 
 CURRENT STATE
@@ -154,43 +193,38 @@ CURRENT STATE
 
 Working Features:
 - Dev server runs on localhost:3000 (npm run dev)
-- Player spawns at correct position with proper physics
-- Smooth horizontal movement with Arrow keys or WASD
-- Player blocked by floor/wall collision tiles
-- Walk/idle/climb animation switching
-- Conveyor belt detection (pushes player when on it)
-- ELEVATOR SYSTEM: Player can ride elevators between all 4 floors
-- STAIR SYSTEM: Player can ascend/descend stairs diagonally
-- FALL DEATH: Walking off stairs mid-climb triggers death
-- DOOR SYSTEM: 10 doors with open animation on SPACE key
-- ITEM SYSTEM: 4 items randomly placed, collectible with overlap
-- INVENTORY HUD: Shows collected items at bottom left
-- MR. ANGRY: Awakens when his door is opened, pursues with full AI
-- ENEMY AI: Inspector, Manager, Patron pursue player across floors
-- PATHFINDING: Enemies use elevators and stairs to reach player
-- CONVEYOR AVOIDANCE: Enemies cannot use conveyor belt
-- DEATH ON CONTACT: Collision with any enemy triggers death
-- Pause toggle with semi-transparent overlay
-- Debug visualization toggle showing all level objects
-- Production build succeeds (npm run build)
+- COMPLETE GAMEPLAY LOOP:
+  * Collect 4 items (pass, key, camera, bulb) from random doors
+  * Avoid 3 enemies (Inspector, Manager, Patron) from start
+  * Avoid Mr. Angry after opening his door
+  * Photograph Polly (top floor, left door) with all items to win
+  * 120 second time limit with 30s warning
+- TIMER: Countdown display, warning at 30s (flashing), death on expire
+- AUDIO: ZzFX procedural sounds for all game events
+- HUD: Lives, timer, score, floor indicator, inventory icons
+- WIN CONDITION: All items + photograph = victory with time bonus
+- GAME OVER: Win/lose differentiation, high score tracking
+- Mute toggle (M key)
+- All previous features from Phases 1-7 remain functional
 
 Key Files Modified This Phase:
-- src/entities/Enemy.js (NEW - base enemy class)
-- src/systems/EnemyAI.js (NEW - pathfinding system)
-- src/entities/MrAngry.js (MODIFIED - integrated with EnemyAI)
-- src/scenes/GameScene.js (MODIFIED - enemy spawn and AI integration)
+- src/systems/TimerSystem.js (NEW - timer countdown)
+- src/audio/SoundManager.js (NEW - ZzFX audio)
+- src/ui/HUD.js (NEW - proper HUD class)
+- src/scenes/GameScene.js (MODIFIED - full integration)
+- src/scenes/GameOverScene.js (MODIFIED - win/lose/high score)
 
 Controls:
 - Arrow Keys / WASD: Move player
-- SPACE: Open door (when near)
+- SPACE: Open door / Photograph Polly (when near)
 - Up/Down near elevator: Enter elevator, move up/down
 - Left/Right on elevator at floor: Exit elevator
 - Up/Down near stairs: Enter stairs, move diagonally
 - Left/Right at stair landing: Exit stairs
 - P: Toggle pause
+- M: Toggle mute
 - D: Toggle debug visualization
 - G: Go to Game Over (dev)
-- M: Return to Menu (dev)
 
 Test Commands:
 - npm install    (install dependencies)
@@ -199,39 +233,24 @@ Test Commands:
 
 --------------------------------------------------------------------------------
 
-NEXT PHASE: Phase 8 - Win Condition, HUD & Audio
-------------------------------------------------
+GAME COMPLETE!
+--------------
 
-Objective: Complete gameplay loop with win condition, UI, and sound.
+All 8 phases have been implemented. The game is now fully playable with:
+- Complete gameplay loop (collect items, avoid enemies, photograph celebrity)
+- Win and lose conditions
+- Timer with warning
+- Procedural audio
+- High score persistence
+- Full HUD
 
-Tasks:
-[ ] 8.1 Create src/ui/HUD.js (lives, inventory, timer, score)
-[ ] 8.2 Create src/systems/TimerSystem.js (120s countdown, warning at 30s)
-[ ] 8.3 Implement win condition (all items + photograph Polly)
-[ ] 8.4 Implement scoring system (items + photograph + time bonus)
-[ ] 8.5 Create src/audio/SoundManager.js (ZzFX integration)
-[ ] 8.6 Add sound effects (door, pickup, death, etc.)
-[ ] 8.7 Implement mute toggle (M key)
-[ ] 8.8 Update pause system
-[ ] 8.9 Update GameOverScene with final score and high score
-[ ] 8.10 Optional: TouchControls for mobile
-
-Verification Criteria:
-- HUD displays lives, inventory, timer, score correctly
-- Timer counts down from 120 seconds
-- Timer warning at 30 seconds
-- Timer expiration triggers death
-- Goal door only opens with all 4 items
-- Photographing Polly triggers win sequence
-- Score calculated correctly (items + photograph + time bonus)
-- All sound effects play at correct moments
-- Mute toggle works
-- Full gameplay loop: Start → Play → Win/Lose → Restart
-
-Reference Docs:
-- docs/plan.md (full task breakdown)
-- docs/tdd.md (HUD, Timer, Sound structures)
-- docs/prd.md (US-007: Timer, US-008: Win Condition)
+Optional future enhancements:
+- Touch controls for mobile
+- Additional levels
+- Improved sprite graphics
+- Music/jingles
+- Settings menu
+- Leaderboard
 
 --------------------------------------------------------------------------------
 
@@ -240,7 +259,7 @@ REPOSITORY
 
 Remote: https://github.com/The-Ruffian-Collective/mrangry2026.git
 Branch: main
-Latest Commit: 7068085 (Phase 6)
+Latest Commit: 356360e (Phase 7)
 
 --------------------------------------------------------------------------------
 
@@ -249,9 +268,9 @@ HANDOVER NOTES FOR NEW AGENTS
 
 1. Read CLAUDE.md first - contains project overview and quick reference
 2. Check this file (docs/project-status.txt) for current state
-3. Review docs/plan.md for the phase you're working on
+3. Review docs/plan.md for any phase details
 4. Run `npm install && npm run dev` to verify setup works
-5. After completing a phase:
+5. After completing work:
    - Update this project-status.txt file
    - Update the README.md file
    - **REQUEST USER VERIFICATION** - Let user test at localhost:3000
@@ -260,14 +279,12 @@ HANDOVER NOTES FOR NEW AGENTS
    - Push to GitHub
    - Include "Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
-Phase 7 Notes:
-- EnemyAI uses waypoint-based navigation (not full A*)
-- Enemies recalculate paths every 500ms for responsive pursuit
-- Elevators can only have one rider at a time (player OR enemy)
-- Enemies avoid conveyors by finding nearest exit point
-- Mr. Angry now uses full pathfinding (not just same-floor chase)
-- All enemies added to physics group for centralized collision
-- Enemy types: inspector (red), manager (purple), patron (green), mr_angry (light red)
-- Enemy frames: inspector=0-3, manager=4-7, patron=8-11, mr_angry=12-15
+Phase 8 Notes:
+- TimerSystem: Uses delta time, callbacks for warning/expire, pause support
+- SoundManager: ZzFX inline implementation, no external dependencies
+- HUD class: Consolidates all UI, updates each frame from player/timer state
+- Win condition: Must be at open Polly door with all 4 items, press SPACE
+- Scoring: Items (100-200 each) + Photograph (500) + Time bonus (10/sec)
+- High score: Stored in localStorage under 'mrAngry2026_highScore'
 
 ================================================================================

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { C64_PALETTE } from '../constants/palette.js';
+import { C64_PALETTE, C64_PALETTE_HEX } from '../constants/palette.js';
 import { GAME } from '../constants/game.js';
 import { Player } from '../entities/Player.js';
 import { Enemy } from '../entities/Enemy.js';
@@ -7,12 +7,15 @@ import { ElevatorSystem } from '../systems/ElevatorSystem.js';
 import { DoorManager } from '../systems/DoorManager.js';
 import { EnemyAI } from '../systems/EnemyAI.js';
 import { MrAngry } from '../entities/MrAngry.js';
+import { TimerSystem } from '../systems/TimerSystem.js';
+import { SoundManager } from '../audio/SoundManager.js';
+import { HUD } from '../ui/HUD.js';
 
 /**
  * GameScene - Main gameplay scene
  *
  * Handles level rendering, player control, collision detection,
- * and game state management. Phase 4 focuses on player movement.
+ * and game state management. Phase 8 adds win condition, timer, and audio.
  */
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -25,6 +28,12 @@ export class GameScene extends Phaser.Scene {
     // Game state
     this.isPaused = false;
     this.isGameOver = false;
+    this.isWin = false;
+    this.lastWarningBeep = 0;
+
+    // Create sound manager first (Phase 8)
+    this.soundManager = new SoundManager(this);
+    this.soundManager.init();
 
     // Create tilemap
     this.createLevel();
@@ -40,9 +49,6 @@ export class GameScene extends Phaser.Scene {
 
     // Setup collisions
     this.setupCollisions();
-
-    // Create HUD (minimal for Phase 4)
-    this.createHUD();
 
     // Create elevator system (Phase 5)
     this.elevatorSystem = new ElevatorSystem(this);
@@ -71,10 +77,64 @@ export class GameScene extends Phaser.Scene {
     this.mrAngry = null;
     this.events.on('mrAngryAwakened', this.spawnMrAngry, this);
 
+    // Create timer system (Phase 8)
+    this.timerSystem = new TimerSystem(this);
+    this.setupTimerCallbacks();
+    this.timerSystem.start();
+
+    // Create HUD (Phase 8 - new proper HUD class)
+    this.hud = new HUD(this);
+
+    // Create pause overlay
+    this.createPauseOverlay();
+
     // Debug visualization (toggle with D key)
     this.debugGraphics = null;
-    this.debugDynamicGraphics = null; // Separate graphics for dynamic elements (cleared each frame)
+    this.debugDynamicGraphics = null;
     this.showDebug = false;
+  }
+
+  /**
+   * Setup timer callbacks for warning and expiration
+   */
+  setupTimerCallbacks() {
+    this.timerSystem.onWarning = () => {
+      this.soundManager.play('timer_warning');
+      console.log('Timer warning: 30 seconds remaining!');
+    };
+
+    this.timerSystem.onExpire = () => {
+      console.log('Timer expired!');
+      if (!this.player.state.isDead) {
+        this.player.die('timer');
+      }
+    };
+  }
+
+  /**
+   * Create pause overlay
+   */
+  createPauseOverlay() {
+    this.pauseOverlay = this.add.rectangle(
+      GAME.WIDTH / 2,
+      GAME.HEIGHT / 2,
+      GAME.WIDTH,
+      GAME.HEIGHT,
+      0x000000,
+      0.7
+    ).setDepth(GAME.LAYER_HUD + 1).setVisible(false);
+
+    this.pauseText = this.add.text(GAME.WIDTH / 2, GAME.HEIGHT / 2, 'PAUSED', {
+      fontSize: '16px',
+      fontFamily: 'monospace',
+      color: '#B8C76F'
+    }).setOrigin(0.5).setDepth(GAME.LAYER_HUD + 2).setVisible(false);
+
+    this.pauseHints = this.add.text(GAME.WIDTH / 2, GAME.HEIGHT / 2 + 30, 'P: Resume  M: Mute', {
+      fontSize: '8px',
+      fontFamily: 'monospace',
+      color: '#6C6C6C'
+    }).setOrigin(0.5).setDepth(GAME.LAYER_HUD + 2).setVisible(false);
   }
 
   /**
@@ -268,13 +328,15 @@ export class GameScene extends Phaser.Scene {
       this.handleGameOver();
     });
 
-    this.input.keyboard.on('keydown-M', () => {
-      this.scene.start('MenuScene');
-    });
-
     // Pause toggle
     this.pauseKey.on('down', () => {
       this.togglePause();
+    });
+
+    // Mute toggle (Phase 8)
+    this.muteKey.on('down', () => {
+      this.soundManager.toggleMute();
+      this.soundManager.play('ui_select');
     });
 
     // Debug toggle
@@ -313,7 +375,13 @@ export class GameScene extends Phaser.Scene {
     const itemType = this.doorManager.collectItem(item);
     if (itemType) {
       player.collectItem(itemType);
+      this.soundManager.play('item_pickup');
       console.log(`Collected: ${itemType}`);
+
+      // Check if all items collected
+      if (player.hasAllItems()) {
+        this.hud.showAllItemsCollected();
+      }
     }
   }
 
@@ -328,6 +396,9 @@ export class GameScene extends Phaser.Scene {
     this.mrAngry = new MrAngry(this, data.x, data.y);
     this.mrAngry.awaken();
 
+    // Play awakening sound
+    this.soundManager.play('mr_angry_wake');
+
     // Add collision with collision layer
     this.physics.add.collider(this.mrAngry, this.collisionLayer);
 
@@ -340,8 +411,6 @@ export class GameScene extends Phaser.Scene {
       this
     );
 
-    // Add to enemies group so AI can manage it
-    // Note: Mr. Angry is handled by EnemyAI in update loop
     console.log('Mr. Angry spawned!');
   }
 
@@ -350,103 +419,11 @@ export class GameScene extends Phaser.Scene {
    */
   handleEnemyCollision(player, enemy) {
     if (!player.isInvulnerable()) {
+      this.soundManager.play('death');
       player.die('enemy');
     }
   }
 
-  /**
-   * Create HUD with lives, score, floor, and inventory
-   */
-  createHUD() {
-    // Lives display
-    this.livesText = this.add.text(8, 4, '', {
-      fontSize: '8px',
-      fontFamily: 'monospace',
-      color: '#FFFFFF'
-    }).setDepth(GAME.LAYER_HUD);
-
-    // Floor indicator
-    this.floorText = this.add.text(GAME.WIDTH - 8, 4, '', {
-      fontSize: '8px',
-      fontFamily: 'monospace',
-      color: '#B8C76F'
-    }).setOrigin(1, 0).setDepth(GAME.LAYER_HUD);
-
-    // Score display
-    this.scoreText = this.add.text(GAME.WIDTH / 2, 4, '', {
-      fontSize: '8px',
-      fontFamily: 'monospace',
-      color: '#FFFFFF'
-    }).setOrigin(0.5, 0).setDepth(GAME.LAYER_HUD);
-
-    // Inventory display - item icons at bottom left
-    this.inventoryIcons = {};
-    const itemTypes = ['pass', 'key', 'camera', 'bulb'];
-    const startX = 8;
-    const iconY = GAME.HEIGHT - 20;
-
-    itemTypes.forEach((type, index) => {
-      const icon = this.add.sprite(startX + index * 20, iconY, 'items', index);
-      icon.setDepth(GAME.LAYER_HUD);
-      icon.setAlpha(0.3); // Dim until collected
-      this.inventoryIcons[type] = icon;
-    });
-
-    // Control hints (bottom right)
-    this.hintsText = this.add.text(GAME.WIDTH - 8, GAME.HEIGHT - 8, 'SPACE: Open Door', {
-      fontSize: '6px',
-      fontFamily: 'monospace',
-      color: '#6C6C6C'
-    }).setOrigin(1, 1).setDepth(GAME.LAYER_HUD);
-
-    // Pause overlay (hidden initially)
-    this.pauseOverlay = this.add.rectangle(
-      GAME.WIDTH / 2,
-      GAME.HEIGHT / 2,
-      GAME.WIDTH,
-      GAME.HEIGHT,
-      0x000000,
-      0.7
-    ).setDepth(GAME.LAYER_HUD + 1).setVisible(false);
-
-    this.pauseText = this.add.text(GAME.WIDTH / 2, GAME.HEIGHT / 2, 'PAUSED', {
-      fontSize: '16px',
-      fontFamily: 'monospace',
-      color: '#B8C76F'
-    }).setOrigin(0.5).setDepth(GAME.LAYER_HUD + 2).setVisible(false);
-  }
-
-  /**
-   * Update HUD displays
-   */
-  updateHUD() {
-    if (!this.player) return;
-
-    // Lives with heart symbols
-    const hearts = '\u2665'.repeat(this.player.state.lives);
-    this.livesText.setText(hearts);
-
-    // Floor number
-    this.floorText.setText(`F${this.player.state.currentFloor}`);
-
-    // Score
-    this.scoreText.setText(this.player.score.toString().padStart(6, '0'));
-
-    // Update inventory icons
-    const inv = this.player.state.inventory;
-    if (this.inventoryIcons.pass) {
-      this.inventoryIcons.pass.setAlpha(inv.pass ? 1 : 0.3);
-    }
-    if (this.inventoryIcons.key) {
-      this.inventoryIcons.key.setAlpha(inv.key ? 1 : 0.3);
-    }
-    if (this.inventoryIcons.camera) {
-      this.inventoryIcons.camera.setAlpha(inv.camera ? 1 : 0.3);
-    }
-    if (this.inventoryIcons.bulb) {
-      this.inventoryIcons.bulb.setAlpha(inv.bulb ? 1 : 0.3);
-    }
-  }
 
   /**
    * Get current input state
@@ -468,11 +445,14 @@ export class GameScene extends Phaser.Scene {
     this.isPaused = !this.isPaused;
     this.pauseOverlay.setVisible(this.isPaused);
     this.pauseText.setVisible(this.isPaused);
+    this.pauseHints.setVisible(this.isPaused);
 
     if (this.isPaused) {
       this.physics.pause();
+      this.timerSystem.pause();
     } else {
       this.physics.resume();
+      this.timerSystem.resume();
     }
   }
 
@@ -559,13 +539,68 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Handle game over
+   * Handle game over (lose condition)
    */
   handleGameOver() {
     this.isGameOver = true;
+    this.timerSystem.stop();
+    this.soundManager.play('game_over');
     this.scene.start('GameOverScene', {
-      score: this.player ? this.player.score : 0
+      score: this.player ? this.player.score : 0,
+      isWin: false,
+      timeRemaining: this.timerSystem.getTimeRemaining()
     });
+  }
+
+  /**
+   * Handle win condition (photographed Polly)
+   */
+  handleWin() {
+    this.isWin = true;
+    this.isGameOver = true;
+    this.timerSystem.stop();
+
+    // Calculate time bonus
+    const timeBonus = this.timerSystem.getTimeRemaining() * GAME.SCORE_TIME_BONUS;
+    this.player.score += GAME.SCORE_PHOTOGRAPH + timeBonus;
+
+    // Play victory sound
+    this.soundManager.play('level_complete');
+
+    // Show win message
+    this.hud.showWinMessage();
+
+    // Camera flash for photograph effect
+    this.cameras.main.flash(500, 255, 255, 255, true);
+
+    // Transition to game over scene after delay
+    this.time.delayedCall(2500, () => {
+      this.scene.start('GameOverScene', {
+        score: this.player.score,
+        isWin: true,
+        timeRemaining: this.timerSystem.getTimeRemaining()
+      });
+    });
+  }
+
+  /**
+   * Try to photograph Polly (win condition check)
+   */
+  tryPhotographPolly() {
+    // Check if player has all items
+    if (!this.player.hasAllItems()) {
+      this.hud.showNeedItems(this.player.getItemCount());
+      return false;
+    }
+
+    // Check if at Polly's door and it's open
+    if (this.doorManager.isPollyDoorOpen()) {
+      this.soundManager.play('photograph');
+      this.handleWin();
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -631,8 +666,26 @@ export class GameScene extends Phaser.Scene {
    */
   handleDoorInput(input) {
     if (input.action) {
+      // First check if we can photograph Polly (at open Polly door with all items)
+      if (this.doorManager.isPollyDoorOpen() && this.player.hasAllItems()) {
+        this.tryPhotographPolly();
+        return;
+      }
+
+      // Check if near Polly's door without all items
+      const nearbyDoor = this.doorManager.findNearbyDoor(this.player.x, this.player.y);
+      if (nearbyDoor && nearbyDoor === this.doorManager.pollyDoor) {
+        if (!this.player.hasAllItems()) {
+          this.hud.showNeedItems(this.player.getItemCount());
+          return;
+        }
+      }
+
       // Try to interact with nearby door
-      this.doorManager.interactWithDoor(this.player);
+      const didInteract = this.doorManager.interactWithDoor(this.player);
+      if (didInteract) {
+        this.soundManager.play('door_open');
+      }
     }
   }
 
@@ -650,6 +703,17 @@ export class GameScene extends Phaser.Scene {
 
     // Get input state
     const input = this.getInputState();
+
+    // Update timer system (Phase 8)
+    this.timerSystem.update(delta);
+
+    // Play warning beeps periodically when in warning state
+    if (this.timerSystem.isWarning()) {
+      if (time - this.lastWarningBeep > 1000) {
+        this.soundManager.playWarningBeep();
+        this.lastWarningBeep = time;
+      }
+    }
 
     // Update elevator system
     this.elevatorSystem.update(delta);
@@ -694,8 +758,8 @@ export class GameScene extends Phaser.Scene {
       this.mrAngry.update(time, delta, this.player);
     }
 
-    // Update HUD
-    this.updateHUD();
+    // Update HUD (Phase 8)
+    this.hud.update(this.player, this.timerSystem, this.soundManager);
 
     // Update debug visualization if active
     if (this.showDebug && this.debugDynamicGraphics) {

@@ -81,9 +81,10 @@ mr-angry-2026/
 │   ├── config.js         # Phaser configuration
 │   ├── constants/        # Palette, game constants
 │   ├── scenes/           # Boot, Menu, Game, GameOver
-│   ├── entities/         # Player, Enemy classes
+│   ├── entities/         # Player, Enemy, MrAngry
 │   ├── systems/          # AI, Doors, Elevators, Timer
-│   └── ui/               # HUD, Touch controls
+│   ├── audio/            # SoundManager (ZzFX)
+│   └── ui/               # HUD
 ├── assets/
 │   ├── sprites/          # Character & tile graphics
 │   └── tilemaps/         # Level data (Tiled JSON)
@@ -95,9 +96,9 @@ mr-angry-2026/
 
 ## Development
 
-This project is being developed in phases. See `docs/project-status.txt` for current progress.
+This project was developed in 8 phases. See `docs/project-status.txt` for detailed history.
 
-### Current Status: Phase 7 Complete
+### Status: COMPLETE
 
 - [x] Phase 1: Project Foundation & Phaser Setup
 - [x] Phase 2: Placeholder Graphics & Menu Screen
@@ -106,7 +107,7 @@ This project is being developed in phases. See `docs/project-status.txt` for cur
 - [x] Phase 5: Elevators & Stairs Navigation
 - [x] Phase 6: Doors, Items & Mr. Angry
 - [x] Phase 7: Enemy AI & Collisions
-- [ ] Phase 8: Win Condition, HUD & Audio
+- [x] Phase 8: Win Condition, HUD & Audio
 
 ## Credits
 
