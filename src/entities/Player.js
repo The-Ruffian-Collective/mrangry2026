@@ -456,10 +456,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Red flash
     this.scene.cameras.main.flash(150, 104, 55, 43, true); // C64 Red flash
 
-    // Death sequence
+    // Death sequence - coordinated through scene for full system reset
     this.scene.time.delayedCall(800, () => {
       if (this.state.lives > 0) {
-        this.respawn();
+        this.scene.handleRespawn();
       } else {
         // Game over
         this.scene.handleGameOver();

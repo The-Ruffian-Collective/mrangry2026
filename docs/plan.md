@@ -478,45 +478,193 @@ Complete gameplay loop with win condition, UI, and sound.
 
 ---
 
-## Phase 9: Polish & Final Assets (Optional)
+## Phase 9: Bug Fixes & MVP Polish
+
+### Objective
+Fix critical, major, and minor bugs found during comprehensive audit to bring the game to a playable MVP state.
+
+**Full audit report:** See `docs/audit-report.md` for detailed findings with evidence.
+
+---
+
+### Phase 9A: Respawn Flow Coordination (CRITICAL)
+
+**Objective:** Create a unified respawn system so that when the player dies, ALL game systems reset properly.
+
+**Root cause:** `Player.die()` only resets the player. Timer, enemies, doors, and Mr. Angry are never reset.
+
+#### Tasks
+
+- [ ] **9A.1** Create `handleRespawn()` method in `GameScene.js` that:
+  1. Calls `this.timerSystem.reset()` then `this.timerSystem.start()`
+  2. Calls `this.enemies.getChildren().forEach(e => e.reset())`
+  3. Calls `this.doorManager.reset()` to re-randomize items
+  4. Removes Mr. Angry if spawned (`this.mrAngry = null`)
+  5. Re-sets up item collection overlaps (since items are regenerated)
+- [ ] **9A.2** Modify `Player.die()` to call `scene.handleRespawn()` instead of `this.respawn()` directly. The scene method should call `player.respawn()` internally.
+- [ ] **9A.3** Add invulnerability check to timer expiry callback (`GameScene.js:106-110`)
+
+**Files:** `src/scenes/GameScene.js`, `src/entities/Player.js`
+
+#### Verification
+- Timer death -> life lost, timer resets to 2:00, enemies back at spawn, doors re-randomized
+- Enemy collision death -> same reset flow
+- All 3 lives lost -> Game Over scene appears
+- Invulnerable player not killed by timer
+
+---
+
+### Phase 9B: Fix Enemy Movement (CRITICAL)
+
+**Objective:** Get enemies actually pursuing the player across floors.
+
+**Root cause (needs runtime investigation):** Enemies are completely static despite `isActive: true` and AI code looking correct on paper. Likely causes: collision layer blocking horizontal movement, enemy body overlapping floor tiles, or pathfinding waypoint never being set.
+
+#### Tasks
+
+- [ ] **9B.1** Add diagnostic logging to `EnemyAI.update()`: log enemy position, floor, pathfindTimer, nextWaypoint on each repath cycle
+- [ ] **9B.2** Add diagnostic logging to `EnemyAI.moveEnemy()`: log waypoint, velocity being applied
+- [ ] **9B.3** Run game and analyze logs to identify exact failure point
+- [ ] **9B.4** Fix the root cause (most likely one of):
+  - Adjust enemy spawn Y positions so bodies don't overlap collision tiles
+  - Adjust enemy body offset/size to avoid floor tile collision
+  - Fix pathfinding waypoint calculation if it's returning null/invalid
+  - Check if `physics.add.collider(enemy, collisionLayer)` is preventing horizontal movement on floors
+- [ ] **9B.5** Verify enemies can use elevators (enter, ride, exit at player's floor)
+- [ ] **9B.6** Verify enemies can use stairs (enter, traverse diagonally, exit)
+- [ ] **9B.7** Verify enemies avoid conveyor belts
+- [ ] **9B.8** Remove diagnostic logging once fixed
+
+**Files:** `src/systems/EnemyAI.js`, `src/entities/Enemy.js`, `src/scenes/GameScene.js`, possibly `assets/tilemaps/level1.json`
+
+#### Verification
+- Start game -> enemies begin moving toward player within 1-2 seconds
+- Enemies follow player across floors via elevators and stairs
+- Enemies do not get stuck on conveyors
+- Enemy-player collision triggers death
+
+---
+
+### Phase 9C: HUD & Timer Polish (MEDIUM)
+
+**Objective:** Fix timing accuracy issues in the HUD and player movement.
+
+#### Tasks
+
+- [ ] **9C.1** Fix HUD timer flash to use actual delta instead of hardcoded 16ms (`src/ui/HUD.js`)
+- [ ] **9C.2** Fix player stair movement to use `delta/1000` instead of hardcoded `1/60` (`src/entities/Player.js:280-287`)
+- [ ] **9C.3** Add favicon suppression to `index.html` to eliminate 404 console error
+
+**Files:** `src/ui/HUD.js`, `src/entities/Player.js`, `index.html`
+
+#### Verification
+- Timer warning flash is regular at any frame rate
+- Stair movement feels smooth at various frame rates
+- No 404 errors in console
+
+---
+
+### Phase 9D: Edge Cases & Polish (LOW)
+
+**Objective:** Fix remaining minor bugs and remove dev shortcuts.
+
+#### Tasks
+
+- [ ] **9D.1** Add idle animation fallback to Mr. Angry when velocity is zero (`src/entities/MrAngry.js:126-128`)
+- [ ] **9D.2** Guard elevator platform snap against stair state conflict (`src/systems/ElevatorSystem.js:142-143`)
+- [ ] **9D.3** Guard the `G` key (instant game over) behind debug mode (`src/scenes/GameScene.js:327-329`) - only allow if `this.showDebug` is true
+- [ ] **9D.4** Update `docs/project-status.txt` with Phase 9 completion status
+- [ ] **9D.5** Update `README.md` with current project state
+
+**Files:** `src/entities/MrAngry.js`, `src/systems/ElevatorSystem.js`, `src/scenes/GameScene.js`, `docs/project-status.txt`, `README.md`
+
+#### Verification
+- Mr. Angry stops walk animation when stationary
+- Exiting elevator near stairs doesn't cause visual glitch
+- Pressing G during normal gameplay does nothing
+- Pressing D then G triggers game over (debug mode only)
+
+---
+
+### Phase 9 Sub-Phase Dependencies
+
+```
+Phase 9A (Respawn Flow)  <-- MUST BE FIRST
+    |
+    +-- Phase 9B (Enemy Movement)  <-- Can start after 9A
+    |
+    +-- Phase 9C (HUD/Timer Polish)  <-- Independent, can parallel with 9B
+    |
+    +-- Phase 9D (Edge Cases)  <-- Do last, after 9A+9B+9C verified
+```
+
+### Phase 9 Existing Utilities to Reuse
+
+| Utility | File | Notes |
+|---------|------|-------|
+| `TimerSystem.reset()` | `src/systems/TimerSystem.js:56` | Already exists, just needs to be called |
+| `TimerSystem.start()` | `src/systems/TimerSystem.js:27` | Already exists |
+| `Enemy.reset()` | `src/entities/Enemy.js:216` | Already exists, resets position and state |
+| `DoorManager.reset()` | `src/systems/DoorManager.js:317` | Already exists, re-randomizes contents |
+| `Player.respawn()` | `src/entities/Player.js:473` | Already exists, resets player |
+| `Player.isInvulnerable()` | `src/entities/Player.js:432` | Already exists |
+
+### Phase 9 Full Verification Checklist
+
+1. `npm run dev` - no console errors except expected game logs
+2. Enemies move toward player within 1-2 seconds of game start
+3. Enemies pursue across floors via elevators and stairs
+4. Timer death: life lost, timer resets to 2:00, all systems reset
+5. Enemy collision death: same full reset
+6. Game Over after 3 deaths, correct score displayed
+7. Space on Game Over -> clean new game
+8. Full playthrough: collect 4 items, photograph Polly, win sequence
+9. Timer flash is regular and consistent below 30s
+10. G key does nothing unless debug mode (D) is active
+11. No 404 errors in console
+12. `npm run build` succeeds
+
+---
+
+## Phase 10: Polish & Final Assets (Optional)
 
 ### Objective
 Replace placeholder graphics and add polish.
 
 ### Tasks
 
-- [ ] **9.1** Create final pixel art sprites:
+- [ ] **10.1** Create final pixel art sprites:
   - Player photographer with walk cycle
   - Distinct enemy characters
   - Detailed items
   - Animated doors
 
-- [ ] **9.2** Create final tileset:
+- [ ] **10.2** Create final tileset:
   - Textured floors and walls
   - Decorative elements
   - Animated conveyors
 
-- [ ] **9.3** Add CRT shader (optional):
+- [ ] **10.3** Add CRT shader (optional):
   - Scanline effect
   - Slight curvature
   - Toggle on/off
 
-- [ ] **9.4** Add screen transitions:
+- [ ] **10.4** Add screen transitions:
   - Fade between scenes
   - Smooth level reset
 
-- [ ] **9.5** Add attract mode (optional):
+- [ ] **10.5** Add attract mode (optional):
   - Demo playthrough on menu after idle
 
-- [ ] **9.6** Mobile optimisation:
+- [ ] **10.6** Mobile optimisation:
   - Touch control refinement
   - Responsive scaling
 
-- [ ] **9.7** Performance testing:
+- [ ] **10.7** Performance testing:
   - 60fps verification
   - Mobile performance check
 
-- [ ] **9.8** Build and deploy:
+- [ ] **10.8** Build and deploy:
   - `npm run build`
   - Deploy to hosting
 
@@ -526,34 +674,38 @@ Replace placeholder graphics and add polish.
 
 ```
 Phase 1: Foundation
-    │
-    ▼
+    |
+    v
 Phase 2: Placeholders & Menu
-    │
-    ▼
+    |
+    v
 Phase 3: Tilemap & Level
-    │
-    ├──────────┐
-    ▼          ▼
+    |
+    +----------+
+    v          v
 Phase 4    Phase 6
 Player     Doors/Items
-    │          │
-    ▼          │
-Phase 5        │
-Elevators/     │
-Stairs         │
-    │          │
-    └────┬─────┘
-         ▼
+    |          |
+    v          |
+Phase 5        |
+Elevators/     |
+Stairs         |
+    |          |
+    +----+-----+
+         v
     Phase 7
     Enemies & AI
-         │
-         ▼
+         |
+         v
     Phase 8
     Win/HUD/Audio
-         │
-         ▼
+         |
+         v
     Phase 9
+    Bug Fixes & MVP
+         |
+         v
+    Phase 10
     Polish (Optional)
 ```
 
@@ -570,7 +722,8 @@ Stairs         │
 | **M5: Collecting** | Phase 6 | Player can open doors and collect items |
 | **M6: Chased** | Phase 7 | Enemies pursue, game over possible |
 | **M7: Complete** | Phase 8 | Full gameplay loop, winnable game |
-| **M8: Polished** | Phase 9 | Final art, sounds, ready for release |
+| **M8: MVP** | Phase 9 | All bugs fixed, playable MVP |
+| **M9: Polished** | Phase 10 | Final art, sounds, ready for release |
 
 ---
 

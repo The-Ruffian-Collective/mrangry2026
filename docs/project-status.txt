@@ -2,8 +2,8 @@
 MR. ANGRY 2026 - PROJECT STATUS
 ================================================================================
 Last Updated: 2026-02-09
-Current Phase: Phase 8 COMPLETE (pending verification)
-Next Phase: GAME COMPLETE - Polish & Optimization (Optional)
+Current Phase: Phase 9B (Enemy Movement Fix) - NOT STARTED
+Next Phase: Phase 9C (HUD & Timer Polish)
 ================================================================================
 
 COMPLETED PHASES
@@ -207,12 +207,9 @@ Working Features:
 - Mute toggle (M key)
 - All previous features from Phases 1-7 remain functional
 
-Key Files Modified This Phase:
-- src/systems/TimerSystem.js (NEW - timer countdown)
-- src/audio/SoundManager.js (NEW - ZzFX audio)
-- src/ui/HUD.js (NEW - proper HUD class)
-- src/scenes/GameScene.js (MODIFIED - full integration)
-- src/scenes/GameOverScene.js (MODIFIED - win/lose/high score)
+Key Files Modified This Phase (9A):
+- src/scenes/GameScene.js (MODIFIED - handleRespawn(), timer invulnerability guard)
+- src/entities/Player.js (MODIFIED - die() calls scene.handleRespawn())
 
 Controls:
 - Arrow Keys / WASD: Move player
@@ -233,24 +230,37 @@ Test Commands:
 
 --------------------------------------------------------------------------------
 
-GAME COMPLETE!
---------------
+PHASE 9: BUG FIXES & MVP POLISH
+---------------------------------
 
-All 8 phases have been implemented. The game is now fully playable with:
-- Complete gameplay loop (collect items, avoid enemies, photograph celebrity)
-- Win and lose conditions
-- Timer with warning
-- Procedural audio
-- High score persistence
-- Full HUD
+Comprehensive audit (2026-02-09) found critical bugs preventing MVP status.
+See docs/audit-report.md for full findings with evidence.
 
-Optional future enhancements:
-- Touch controls for mobile
-- Additional levels
-- Improved sprite graphics
-- Music/jingles
-- Settings menu
-- Leaderboard
+Phase 9 Sub-Phases:
+  [✓] 9A: Respawn Flow Coordination (CRITICAL) - COMPLETE
+      - Created handleRespawn() in GameScene to reset timer/enemies/doors
+      - Wired Player.die() to use scene respawn coordination
+      - Added invulnerability check to timer death
+  [ ] 9B: Fix Enemy Movement (CRITICAL) - NOT STARTED
+      - Diagnose why enemies are completely static
+      - Fix root cause (likely collision/physics or pathfinding issue)
+      - Verify multi-floor pursuit via elevators and stairs
+  [ ] 9C: HUD & Timer Polish (MEDIUM) - NOT STARTED
+      - Fix hardcoded delta in HUD timer flash
+      - Fix hardcoded framerate in stair movement
+      - Add favicon suppression
+  [ ] 9D: Edge Cases & Polish (LOW) - NOT STARTED
+      - Mr. Angry idle animation
+      - Elevator/stair state conflict guard
+      - Guard G key behind debug mode
+      - Update project docs
+
+Sub-Phase Order: 9A first (required), then 9B and 9C (can parallel), then 9D last.
+
+Critical Bug Summary:
+1. ENEMIES NEVER MOVE - zero gameplay challenge (9B will fix)
+2. TIMER NEVER RESETS AFTER DEATH - FIXED in 9A
+3. NO RESPAWN COORDINATION - FIXED in 9A
 
 --------------------------------------------------------------------------------
 
@@ -259,7 +269,7 @@ REPOSITORY
 
 Remote: https://github.com/The-Ruffian-Collective/mrangry2026.git
 Branch: main
-Latest Commit: 356360e (Phase 7)
+Latest Commit: 103abe3 (Phase 8)
 
 --------------------------------------------------------------------------------
 
@@ -267,24 +277,29 @@ HANDOVER NOTES FOR NEW AGENTS
 -----------------------------
 
 1. Read CLAUDE.md first - contains project overview and quick reference
-2. Check this file (docs/project-status.txt) for current state
-3. Review docs/plan.md for any phase details
-4. Run `npm install && npm run dev` to verify setup works
-5. After completing work:
+2. Check this file (docs/project-status.txt) for current sub-phase
+3. Read docs/audit-report.md for full bug details and evidence
+4. Review docs/plan.md Phase 9 section for task details
+5. Run `npm install && npm run dev` to verify setup works
+6. Focus on the current sub-phase only (9A -> 9B -> 9C -> 9D)
+7. After completing work:
    - Update this project-status.txt file
    - Update the README.md file
    - **REQUEST USER VERIFICATION** - Let user test at localhost:3000
    - Wait for YEY (approve) or NEY (fix issues) before committing
    - Once approved, commit all changes with descriptive message
    - Push to GitHub
-   - Include "Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+   - Include "Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
-Phase 8 Notes:
-- TimerSystem: Uses delta time, callbacks for warning/expire, pause support
-- SoundManager: ZzFX inline implementation, no external dependencies
-- HUD class: Consolidates all UI, updates each frame from player/timer state
-- Win condition: Must be at open Polly door with all 4 items, press SPACE
-- Scoring: Items (100-200 each) + Photograph (500) + Time bonus (10/sec)
-- High score: Stored in localStorage under 'mrAngry2026_highScore'
+Phase 9 Key References:
+- Existing methods that need to be CALLED (not created):
+  * TimerSystem.reset() -> src/systems/TimerSystem.js:56
+  * TimerSystem.start() -> src/systems/TimerSystem.js:27
+  * Enemy.reset() -> src/entities/Enemy.js:216
+  * DoorManager.reset() -> src/systems/DoorManager.js:317
+  * Player.respawn() -> src/entities/Player.js:473
+  * Player.isInvulnerable() -> src/entities/Player.js:432
+- Key integration point: Player.die() at src/entities/Player.js:439
+- Scene respawn entry: delayedCall at src/entities/Player.js:460-467
 
 ================================================================================

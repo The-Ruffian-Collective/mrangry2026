@@ -105,7 +105,7 @@ export class GameScene extends Phaser.Scene {
 
     this.timerSystem.onExpire = () => {
       console.log('Timer expired!');
-      if (!this.player.state.isDead) {
+      if (!this.player.state.isDead && !this.player.isInvulnerable()) {
         this.player.die('timer');
       }
     };
@@ -424,6 +424,36 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Handle coordinated respawn - resets ALL game systems after player death
+   * Called from Player.die() instead of Player.respawn() directly.
+   */
+  handleRespawn() {
+    // 1. Reset timer
+    this.timerSystem.reset();
+    this.timerSystem.start();
+
+    // 2. Reset all enemies to spawn positions
+    this.enemies.getChildren().forEach(e => e.reset());
+
+    // 3. Reset doors and re-randomize items
+    this.doorManager.reset();
+
+    // 4. Remove Mr. Angry if spawned
+    if (this.mrAngry) {
+      this.mrAngry.destroy();
+      this.mrAngry = null;
+    }
+
+    // 5. Re-setup item collection overlaps (items group was cleared/recreated by doorManager.reset)
+    this.setupItemCollection();
+
+    // 6. Reset player inventory (items re-randomized, so inventory must clear)
+    this.player.state.inventory = { pass: false, key: false, camera: false, bulb: false };
+
+    // 7. Respawn the player
+    this.player.respawn();
+  }
 
   /**
    * Get current input state

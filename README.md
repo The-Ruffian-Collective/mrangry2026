@@ -96,9 +96,9 @@ mr-angry-2026/
 
 ## Development
 
-This project was developed in 8 phases. See `docs/project-status.txt` for detailed history.
+See `docs/project-status.txt` for detailed history.
 
-### Status: COMPLETE
+### Status: Phase 9 - Bug Fixes & MVP Polish (In Progress)
 
 - [x] Phase 1: Project Foundation & Phaser Setup
 - [x] Phase 2: Placeholder Graphics & Menu Screen
@@ -108,6 +108,11 @@ This project was developed in 8 phases. See `docs/project-status.txt` for detail
 - [x] Phase 6: Doors, Items & Mr. Angry
 - [x] Phase 7: Enemy AI & Collisions
 - [x] Phase 8: Win Condition, HUD & Audio
+- [ ] Phase 9: Bug Fixes & MVP Polish
+  - [x] 9A: Respawn Flow Coordination
+  - [ ] 9B: Enemy Movement Fix
+  - [ ] 9C: HUD & Timer Polish
+  - [ ] 9D: Edge Cases & Polish
 
 ## Credits
 
